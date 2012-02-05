@@ -52,7 +52,7 @@ namespace WebTyphoon
             }
 
            _dispatch = new Thread(Dispatch);
-            _dispatch.Start();
+           _dispatch.Start();
         }
 
         public void AcceptConnection(NetworkStream stream)
@@ -148,9 +148,12 @@ namespace WebTyphoon
             }
         }
 
-        private static void Worker(object workerQueueParam)
+        private static void Worker(object workerData)
         {
-            var workerQueue = (Queue<WebSocketConnection>)workerQueueParam;
+            var data = (WorkerStartData) workerData;
+            var workerQueue = data.Queue;
+            var workSignal = data.WorkSignal;
+
             while (true)
             {
                 while (workerQueue.Count != 0)
@@ -166,7 +169,7 @@ namespace WebTyphoon
                         cn.Processing = false;
                     }
                 }
-                Thread.Sleep(100);
+                workSignal.WaitOne();
             }
         }
 
@@ -185,11 +188,12 @@ namespace WebTyphoon
                     {
                         lock (_workers)
                         {
-                            var freeQueue = (from w in _workers orderby w.Queue.Count ascending select w.Queue).First();
+                            var freeQueueWorker = (from w in _workers orderby w.Queue.Count ascending select w).First();
                             c.Processing = true;
-                            lock(freeQueue)
+                            lock (freeQueueWorker.Queue)
                             {
-                                freeQueue.Enqueue(c);
+                                freeQueueWorker.Queue.Enqueue(c);
+                                freeQueueWorker.WorkSignal.Set();
                             }
                         }
                     }
@@ -200,9 +204,20 @@ namespace WebTyphoon
 
         private WorkerThread CreateWorkerThread()
         {
-            var wt = new WorkerThread {Queue = new Queue<WebSocketConnection>(), Worker = new Thread(Worker)};
+            var wt = new WorkerThread
+                         {
+                             Queue = new Queue<WebSocketConnection>(), 
+                             Worker = new Thread(Worker),
+                             WorkSignal = new EventWaitHandle(false, EventResetMode.AutoReset)
+                         };
 
             return wt;
         }
+    }
+
+    struct WorkerStartData
+    {
+        public Queue<WebSocketConnection> Queue;
+        public EventWaitHandle WorkSignal;
     }
 }

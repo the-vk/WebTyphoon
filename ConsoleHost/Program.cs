@@ -62,13 +62,13 @@ namespace ConsoleHost
         static void _connection_WebSocketFragmentRecieved(object sender, WebTyphoon.WebSocketFragmentRecievedEventArgs e)
         {
             if (i == 0) Start = DateTime.Now;
-            Console.WriteLine(e.Fragment.PayloadString);
+            //Console.WriteLine(e.Fragment.PayloadString);
             ++i;
-            if(i == 9999)
+            if (i == 10000)
             {
                 End = DateTime.Now;
                 var time = End - Start;
-                var messagesPerSec = 10000/time.TotalSeconds;
+                var messagesPerSec = 10000 / time.TotalSeconds;
                 i = 0;
             }
         }

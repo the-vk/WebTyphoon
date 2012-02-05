@@ -29,10 +29,14 @@ namespace WebTyphoon
     {
         public Thread Worker { get; set; }
         public Queue<WebSocketConnection> Queue { get; set; }
+        public EventWaitHandle WorkSignal { get; set; }
 
         public void Start()
         {
-            Worker.Start(Queue);
+            var workerData = new WorkerStartData();
+            workerData.Queue = Queue;
+            workerData.WorkSignal = WorkSignal;
+            Worker.Start(workerData);
         }
     }
 }

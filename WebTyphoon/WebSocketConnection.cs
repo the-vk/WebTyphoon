@@ -44,7 +44,7 @@ namespace WebTyphoon
         private readonly List<WebSocketFragment> _fragmentsList;
         private readonly Queue<WebSocketFragment> _sendFragmentQueue;
 
-        private const int InputBufferLength = 10240;
+        private const int InputBufferLength = 102400;
 
         public WebSocketConnectionStatus Status { get; set; }
 
@@ -82,12 +82,15 @@ namespace WebTyphoon
             _stream.BeginRead(state.Buffer, 0, InputBufferLength, AsyncReadHandler, state);
         }
 
+        private long fullLength = 0;
+
         private void AsyncReadHandler(IAsyncResult ar)
         {
             var s = (AsyncReadData) ar.AsyncState;
             try
             {
                 var readBytes = s.Stream.EndRead(ar);
+                fullLength += readBytes;
                 ReadData(s.Buffer, readBytes);
 
                 StartRead();
@@ -103,9 +106,7 @@ namespace WebTyphoon
         {
             _dataBuffer.Write(buffer, 0, readBytes);
 
-            while (CheckForFrame())
-            {
-            }
+            CheckForFrame();
         }
 
         private bool CheckForFrame()
@@ -173,7 +174,7 @@ namespace WebTyphoon
                 _currentFragmentLength = 0;
             }
 
-            return true;
+            return false;
         }
 
         private void WriteData(WebSocketFragment fragment)

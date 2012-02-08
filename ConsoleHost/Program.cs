@@ -21,6 +21,7 @@ SOFTWARE.
 */
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using WebTyphoon;
@@ -30,9 +31,9 @@ namespace ConsoleHost
     class Program
     {
         private static WebSocketConnection _connection;
-        private static DateTime _start;
-        private static DateTime _end;
+        private static Stopwatch _stopwatch = new Stopwatch();
         private static int _i;
+        private const int MessageCount = 100000;
 
         static void Main()
         {
@@ -59,18 +60,23 @@ namespace ConsoleHost
 
         static void ConnectionWebSocketFragmentRecieved(object sender, WebSocketFragmentRecievedEventArgs e)
         {
-            if (_i == 0) _start = DateTime.Now;
-            //Console.WriteLine(e.Fragment.PayloadString);
-            //var fragment = new WebTyphoon.WebSocketFragment(true, OpCode.TextFrame, e.Fragment.PayloadString);
-            //_connection.SendFragment(fragment);
-            ++_i;
-            if (_i == 10000)
+            lock (_stopwatch)
             {
-                _end = DateTime.Now;
-                var time = _end - _start;
-                var messagesPerSec = 10000 / time.TotalSeconds;
-                Console.WriteLine(messagesPerSec);
-                _i = 0;
+                if (_i == 0) _stopwatch.Start();
+                //Console.WriteLine(e.Fragment.PayloadString);
+                //var fragment = new WebTyphoon.WebSocketFragment(true, OpCode.TextFrame, e.Fragment.PayloadString);
+                //_connection.SendFragment(fragment);
+                ++_i;
+                if (_i >= MessageCount)
+                {
+                    _stopwatch.Stop();
+                    var time = (double) _stopwatch.ElapsedTicks/Stopwatch.Frequency;
+                    _stopwatch.Reset();
+                    var messagesPerSec = MessageCount/(time);
+                    Console.WriteLine(messagesPerSec);
+                    _i = 0;
+                    _stopwatch.Start();
+                }
             }
         }
     }

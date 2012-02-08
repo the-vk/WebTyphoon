@@ -51,68 +51,153 @@ namespace WebTyphoon
 
         private readonly byte[] _raw;
 
+        private bool? _fin;
+
         public bool Fin
         {
-            get { return GetBit(_raw[0], FinBit) != 0; }
-            set { _raw[0] = SetBit(_raw[0], FinBit, value); }
+            get
+            {
+                if(!_fin.HasValue)
+                {
+                    _fin = GetBit(_raw[0], FinBit) != 0;
+                }
+                return _fin.Value;
+            }
+            set
+            {
+                _raw[0] = SetBit(_raw[0], FinBit, value);
+                _fin = value;
+            }
         }
+
+        private bool? _rsv1;
 
         public bool RSV1
         {
-            get { return GetBit(_raw[0], RSV1Bit) != 0; }
-            set { _raw[0] = SetBit(_raw[0], RSV1Bit, value); }
+            get
+            {
+                if(!_rsv1.HasValue)
+                {
+                    _rsv1 = GetBit(_raw[0], RSV1Bit) != 0;
+                }
+                return _rsv1.Value;
+            }
+            set
+            {
+                _raw[0] = SetBit(_raw[0], RSV1Bit, value);
+                _rsv1 = value;
+            }
         }
+
+        private bool? _rsv2;
 
         public bool RSV2
         {
-            get { return GetBit(_raw[0], RSV2Bit) != 0; }
-            set { _raw[0] = SetBit(_raw[0], RSV2Bit, value); }
+            get
+            {
+                if (!_rsv2.HasValue)
+                {
+                    _rsv2 = GetBit(_raw[0], RSV2Bit) != 0;
+                }
+                return _rsv2.Value;
+            }
+            set
+            {
+                _raw[0] = SetBit(_raw[0], RSV2Bit, value);
+                _rsv2 = value;
+            }
         }
+
+        private bool? _rsv3;
 
         public bool RSV3
         {
-            get { return GetBit(_raw[0], RSV3Bit) != 0; }
-            set { _raw[0] = SetBit(_raw[0], RSV3Bit, value); }
+            get
+            {
+                if(!_rsv3.HasValue)
+                {
+                    _rsv3 = GetBit(_raw[0], RSV3Bit) != 0;
+                }
+                return _rsv3.Value;
+            }
+            set
+            {
+                _raw[0] = SetBit(_raw[0], RSV3Bit, value);
+                _rsv3 = value;
+            }
         }
+
+        private OpCode? _opCode;
 
         public OpCode OpCode
         {
-            get { return (OpCode)(_raw[0] & OpcodeBit); }
-            set { _raw[0] |=(byte)((byte) value & OpcodeBit); }
+            get
+            {
+                if(!_opCode.HasValue)
+                {
+                    _opCode = (OpCode)(_raw[0] & OpcodeBit);
+                }
+                return _opCode.Value;
+            }
+            set
+            {
+                _raw[0] |=(byte)((byte) value & OpcodeBit);
+                _opCode = value;
+            }
         }
+
+        private bool? _mask;
 
         public bool Mask
         {
-            get { return GetBit(_raw[1], MaskBit) != 0; }
-            set { _raw[1] = SetBit(_raw[1], MaskBit, value); }
+            get
+            {
+                if(!_mask.HasValue)
+                {
+                    _mask = GetBit(_raw[1], MaskBit) != 0;
+                }
+                return _mask.Value;
+            }
+            set
+            {
+                _raw[1] = SetBit(_raw[1], MaskBit, value);
+                _mask = value;
+            }
         }
+
+        private ulong? _payloadLength;
 
         public ulong PayloadLength
         {
             get
             {
-                ulong result = 0;
-                var payloadLen = _raw[1] & PayloadlenBit;
-                if (payloadLen <= 125) result = (ulong)payloadLen;
-                if(payloadLen == 126)
+                if(!_payloadLength.HasValue)
                 {
-                    result = (ulong)(_raw[2] << 8 | _raw[3]);
+                    _payloadLength = 0;
+                    var payloadLen = _raw[1] & PayloadlenBit;
+                    if (payloadLen <= 125) _payloadLength = (ulong)payloadLen;
+                    if (payloadLen == 126)
+                    {
+                        _payloadLength = (ulong)(_raw[2] << 8 | _raw[3]);
+                    }
+                    if (payloadLen == 127)
+                    {
+                        _payloadLength = (ulong)(_raw[2] << 56 |
+                                         _raw[3] << 48 |
+                                         _raw[4] << 40 |
+                                         _raw[5] << 32 |
+                                         _raw[6] << 24 |
+                                         _raw[7] << 16 |
+                                         _raw[8] << 8 |
+                                         _raw[9]);
+                    }
                 }
-                if(payloadLen == 127)
-                {
-                    result = (ulong)(_raw[2] << 56 | 
-                                     _raw[3] << 48 | 
-                                     _raw[4] << 40 | 
-                                     _raw[5] << 32 | 
-                                     _raw[6] << 24 | 
-                                     _raw[7] << 16 | 
-                                     _raw[8] << 8 | 
-                                     _raw[9]);
-                }
-                return result;
+
+                return _payloadLength.Value;
             }
             set
             {
+                _payloadLength = value;
                 if (value <= 125)
                 {
                     _raw[1] |= (byte)(value & PayloadlenBit);
@@ -133,7 +218,7 @@ namespace WebTyphoon
                 _raw[6] = (byte)((value & 0x00000000FF000000) >> 24);
                 _raw[7] = (byte)((value & 0x0000000000FF0000) >> 16);
                 _raw[8] = (byte)((value & 0x000000000000FF00) >> 8);
-                _raw[9] = (byte)((value & 0x00000000000000FF));
+                _raw[9] = (byte)((value & 0x00000000000000FF));                
             }
         }
 

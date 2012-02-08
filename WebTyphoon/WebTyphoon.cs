@@ -32,9 +32,9 @@ namespace WebTyphoon
     {
         private readonly List<WebSocketConnection> _connections;
 
-        private const int WorkersCount = 10;
-        private readonly List<WorkerThread> _workers;
-        private readonly Thread _dispatch;
+        //private const int WorkersCount = 10;
+        //private readonly List<WorkerThread> _workers;
+        //private readonly Thread _dispatch;
 
         private readonly Dictionary<string, ConnectionHandlerData> _uriBindings;
 
@@ -43,16 +43,16 @@ namespace WebTyphoon
             _connections = new List<WebSocketConnection>();
             _uriBindings = new Dictionary<string, ConnectionHandlerData>();
 
-            _workers = new List<WorkerThread>();
+           // _workers = new List<WorkerThread>();
 
-            for (var i = 0; i < WorkersCount; ++i)
-            {
-                _workers.Add(CreateWorkerThread());
-                _workers[i].Start();
-            }
+           // for (var i = 0; i < WorkersCount; ++i)
+           // {
+           //     _workers.Add(CreateWorkerThread());
+           //     _workers[i].Start();
+           // }
 
-           _dispatch = new Thread(Dispatch);
-           _dispatch.Start();
+           //_dispatch = new Thread(Dispatch);
+           //_dispatch.Start();
         }
 
         public void AcceptConnection(NetworkStream stream)
@@ -70,13 +70,15 @@ namespace WebTyphoon
             EventHandler<WebSocketConnectionAcceptEventArgs> connectionAcceptHandler,
             EventHandler<WebSocketConnectionEventArgs> connectionSuccessHandler)
         {
+            var originsList = origins.ToList();
+            var protocolsList = protocols.ToList();
             foreach (var u in uris)
             {
                 var hd = new ConnectionHandlerData
                              {
                                  Uri = u,
-                                 AcceptedOrigins = origins.ToList(),
-                                 AcceptedProtocols = protocols.ToList(),
+                                 AcceptedOrigins = originsList,
+                                 AcceptedProtocols = protocolsList,
                                  ConnectionAcceptHandler = connectionAcceptHandler,
                                  ConnectionSuccessHandler = connectionSuccessHandler
                              };
@@ -134,6 +136,8 @@ namespace WebTyphoon
 
             connection.Closed += ConnectionClosedHandler;
 
+            connection.StartRead();
+
             return connection;
         }
 
@@ -148,71 +152,71 @@ namespace WebTyphoon
             }
         }
 
-        private static void Worker(object workerData)
-        {
-            var data = (WorkerStartData) workerData;
-            var workerQueue = data.Queue;
-            var workSignal = data.WorkSignal;
+        //private static void Worker(object workerData)
+        //{
+        //    var data = (WorkerStartData) workerData;
+        //    var workerQueue = data.Queue;
+        //    var workSignal = data.WorkSignal;
 
-            while (true)
-            {
-                while (workerQueue.Count != 0)
-                {
-                    WebSocketConnection cn;
-                    lock (workerQueue)
-                    {
-                        cn = workerQueue.Dequeue();
-                    }
-                    if (cn.HasWork)
-                    {
-                        cn.Process();
-                        cn.Processing = false;
-                    }
-                }
-                workSignal.WaitOne();
-            }
-        }
+        //    while (true)
+        //    {
+        //        while (workerQueue.Count != 0)
+        //        {
+        //            WebSocketConnection cn;
+        //            lock (workerQueue)
+        //            {
+        //                cn = workerQueue.Dequeue();
+        //            }
+        //            if (cn.HasWork)
+        //            {
+        //                cn.Process();
+        //                cn.Processing = false;
+        //            }
+        //        }
+        //        workSignal.WaitOne();
+        //    }
+        //}
 
-        private void Dispatch()
-        {
-            while (true)
-            {
-                IEnumerable<WebSocketConnection> cons;
-                lock (_connections)
-                {
-                    cons = _connections.ToArray();
-                }
-                foreach (var c in cons)
-                {
-                    if (c.Status != WebSocketConnectionStatus.Closed && !c.Processing && c.HasWork)
-                    {
-                        lock (_workers)
-                        {
-                            var freeQueueWorker = (from w in _workers orderby w.Queue.Count ascending select w).First();
-                            c.Processing = true;
-                            lock (freeQueueWorker.Queue)
-                            {
-                                freeQueueWorker.Queue.Enqueue(c);
-                                freeQueueWorker.WorkSignal.Set();
-                            }
-                        }
-                    }
-                }
-                Thread.Sleep(100);
-            }
-        }
+        //private void Dispatch()
+        //{
+        //    while (true)
+        //    {
+        //        IEnumerable<WebSocketConnection> cons;
+        //        lock (_connections)
+        //        {
+        //            cons = _connections.ToArray();
+        //        }
+        //        foreach (var c in cons)
+        //        {
+        //            if (c.Status != WebSocketConnectionStatus.Closed && !c.Processing && c.HasWork)
+        //            {
+        //                lock (_workers)
+        //                {
+        //                    var freeQueueWorker = (from w in _workers orderby w.Queue.Count ascending select w).First();
+        //                    c.Processing = true;
+        //                    lock (freeQueueWorker.Queue)
+        //                    {
+        //                        freeQueueWorker.Queue.Enqueue(c);
+        //                        freeQueueWorker.WorkSignal.Set();
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        Thread.Sleep(1);
+        //    }
+        //}
 
-        private WorkerThread CreateWorkerThread()
-        {
-            var wt = new WorkerThread
-                         {
-                             Queue = new Queue<WebSocketConnection>(), 
-                             Worker = new Thread(Worker),
-                             WorkSignal = new EventWaitHandle(false, EventResetMode.AutoReset)
-                         };
+        //private WorkerThread CreateWorkerThread()
+        //{
+        //    var wt = new WorkerThread
+        //                 {
+        //                     Queue = new Queue<WebSocketConnection>(), 
+        //                     Worker = new Thread(Worker),
+        //                     WorkSignal = new EventWaitHandle(false, EventResetMode.AutoReset)
+        //                 };
 
-            return wt;
-        }
+        //    return wt;
+        //}
     }
 
     struct WorkerStartData

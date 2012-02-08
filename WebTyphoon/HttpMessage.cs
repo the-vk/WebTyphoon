@@ -39,12 +39,13 @@ namespace WebTyphoon
 
         public HttpMessage(IEnumerable<string> lines) : this()
         {
-            var firstLine = lines.First();
+            var lns = lines.ToList();
+            var firstLine = lns.First();
             var firstLineParts = firstLine.Split(' ');
             Method = firstLineParts[0];
             Uri = firstLineParts[1];
             Version = firstLineParts[2];
-            foreach (var l in lines.Skip(1))
+            foreach (var l in lns.Skip(1))
             {
                 var splitterIndex = l.IndexOf(':');
                 var name = l.Substring(0, splitterIndex).Trim();

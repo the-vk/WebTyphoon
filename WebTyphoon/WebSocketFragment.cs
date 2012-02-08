@@ -179,17 +179,7 @@ namespace WebTyphoon
                 Array.Copy(_raw, PayloadOffset, payload, 0, payload.Length);
                 return Mask ? ApplyMask(payload) : payload;
             }
-            set
-            {
-                if(Mask)
-                {
-                    Array.Copy(ApplyMask(value), 0, _raw, PayloadOffset, value.Length);    
-                }
-                else
-                {
-                    Array.Copy(ApplyMask(value), 0, _raw, PayloadOffset, value.Length);
-                }
-            }
+            set { Array.Copy(Mask ? ApplyMask(value) : value, 0, _raw, PayloadOffset, value.Length); }
         }
 
         public string PayloadString

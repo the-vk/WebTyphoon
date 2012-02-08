@@ -21,26 +21,24 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
+using WebTyphoon;
 
 namespace ConsoleHost
 {
     class Program
     {
-        private static WebTyphoon.WebSocketConnection _connection;
-        private static DateTime Start;
-        private static DateTime End;
-        private static int i = 0;
+        private static WebSocketConnection _connection;
+        private static DateTime _start;
+        private static DateTime _end;
+        private static int _i;
 
-        static void Main(string[] args)
+        static void Main()
         {
             var webTyphoon = new WebTyphoon.WebTyphoon();
 
-            webTyphoon.AddUriBinding(new string[] { "/test" }, new string[] { "test" }, new string[] { "http://cryoengine.net" }, null, webTyphoon_ConnectionAccepted);
+            webTyphoon.AddUriBinding(new[] { "/test" }, new[] { "test" }, new[] { "http://cryoengine.net" }, null, WebTyphoonConnectionAccepted);
 
             var ipEndpoint = new IPEndPoint(IPAddress.Any, 9000);
             var tcpListener = new TcpListener(ipEndpoint);
@@ -53,23 +51,26 @@ namespace ConsoleHost
             }
         }
 
-        static void webTyphoon_ConnectionAccepted(object sender, WebTyphoon.WebSocketConnectionEventArgs e)
+        static void WebTyphoonConnectionAccepted(object sender, WebSocketConnectionEventArgs e)
         {
             _connection = e.Connection;
-            _connection.WebSocketFragmentRecieved += new EventHandler<WebTyphoon.WebSocketFragmentRecievedEventArgs>(_connection_WebSocketFragmentRecieved);
+            _connection.WebSocketFragmentRecieved += ConnectionWebSocketFragmentRecieved;
         }
 
-        static void _connection_WebSocketFragmentRecieved(object sender, WebTyphoon.WebSocketFragmentRecievedEventArgs e)
+        static void ConnectionWebSocketFragmentRecieved(object sender, WebSocketFragmentRecievedEventArgs e)
         {
-            if (i == 0) Start = DateTime.Now;
+            if (_i == 0) _start = DateTime.Now;
             //Console.WriteLine(e.Fragment.PayloadString);
-            ++i;
-            if (i == 10000)
+            //var fragment = new WebTyphoon.WebSocketFragment(true, OpCode.TextFrame, e.Fragment.PayloadString);
+            //_connection.SendFragment(fragment);
+            ++_i;
+            if (_i == 10000)
             {
-                End = DateTime.Now;
-                var time = End - Start;
+                _end = DateTime.Now;
+                var time = _end - _start;
                 var messagesPerSec = 10000 / time.TotalSeconds;
-                i = 0;
+                Console.WriteLine(messagesPerSec);
+                _i = 0;
             }
         }
     }

@@ -21,16 +21,17 @@ SOFTWARE.
 */
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ConsoleHost")]
+[assembly: AssemblyTitle("PerformanceTester")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ConsoleHost")]
+[assembly: AssemblyProduct("PerformanceTester")]
 [assembly: AssemblyCopyright("Copyright ©  2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -41,7 +42,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("1624bf88-46e7-466f-adea-59189e4ae78b")]
+[assembly: Guid("1ba87cd5-16cd-4268-98c4-f245efcf138a")]
 
 // Version information for an assembly consists of the following four values:
 //

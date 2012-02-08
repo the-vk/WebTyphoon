@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace WebTyphoon
 {
@@ -42,13 +43,15 @@ namespace WebTyphoon
         private MemoryStream _dataBuffer;
         private readonly List<WebSocketFragment> _fragmentsList;
         private readonly Queue<WebSocketFragment> _sendFragmentQueue;
-        internal bool Processing { get; set; }
+
+        private const int InputBufferLength = 10240;
 
         public WebSocketConnectionStatus Status { get; set; }
 
         public string Uri { get; internal set; }
         public IEnumerable<string> Protocols { get; internal set; }
         public string Origin { get; internal set; }
+
 
         internal bool HasWork
         {
@@ -68,38 +71,40 @@ namespace WebTyphoon
         public void SendFragment(WebSocketFragment fragment)
         {
             if(Status != WebSocketConnectionStatus.Open) throw new InvalidOperationException("Connection is not open");
-            lock(_sendFragmentQueue)
+
+            WriteData(fragment);
+        }
+
+        internal void StartRead()
+        {
+            var state = new AsyncReadData {Stream = _stream, Buffer = new byte[InputBufferLength]};
+
+            _stream.BeginRead(state.Buffer, 0, InputBufferLength, AsyncReadHandler, state);
+        }
+
+        private void AsyncReadHandler(IAsyncResult ar)
+        {
+            var s = (AsyncReadData) ar.AsyncState;
+            try
             {
-                _sendFragmentQueue.Enqueue(fragment);
+                var readBytes = s.Stream.EndRead(ar);
+                ReadData(s.Buffer, readBytes);
+
+                StartRead();
             }
-        }
-
-        private WebSocketFragment GetFragmentFromSendQueue()
-        {
-            lock(_sendFragmentQueue)
+            catch (Exception)
             {
-                return _sendFragmentQueue.Dequeue();
+                
             }
+            
         }
 
-        internal void Process()
+        private void ReadData(byte[] buffer, int readBytes)
         {
-            ReadData();
-            WriteData();
-        }
+            _dataBuffer.Write(buffer, 0, readBytes);
 
-        private void ReadData()
-        {
-            var buffer = new byte[10240];
-            var dataAvailable = _stream.DataAvailable;
-            if (dataAvailable)
+            while (CheckForFrame())
             {
-                long readByte = _stream.Read(buffer, 0, buffer.Length);
-                _dataBuffer.Write(buffer, 0, (int)readByte);
-
-                while (CheckForFrame())
-                {
-                }
             }
         }
 
@@ -109,88 +114,99 @@ namespace WebTyphoon
 
             byte[] buffer = _dataBuffer.GetBuffer();
             long dataLength = _dataBuffer.Length;
-            if (_currentFragmentLength == 0)
+            var fragmentStart = 0;
+            while (fragmentStart < dataLength)
             {
-                if (dataLength >= 2)
+                if (_currentFragmentLength == 0)
                 {
-                    _currentFragmentLength = 2;
+                    if (dataLength >= 2)
+                    {
+                        _currentFragmentLength = 2;
 
-                    var payloadLength = buffer[1] & 0x7F;
-                    if (payloadLength <= 125)
-                    {
-                        _currentFragmentLength += payloadLength;
-                    }
-                    if (payloadLength == 126 && dataLength >= 4)
-                    {
-                        _currentFragmentLength += buffer[2] << 8 | buffer[3];
-                        _currentFragmentLength += 2;
-                    }
-                    if (payloadLength == 127 && dataLength >= 10)
-                    {
-                        _currentFragmentLength +=
-                            (buffer[2] << 56 |
-                             buffer[3] << 48 |
-                             buffer[4] << 40 |
-                             buffer[5] << 32 |
-                             buffer[6] << 24 |
-                             buffer[7] << 16 |
-                             buffer[8] << 8 |
-                             buffer[9]);
-                        _currentFragmentLength += 8;
-                    }
+                        var payloadLength = buffer[fragmentStart + 1] & 0x7F;
+                        if (payloadLength <= 125)
+                        {
+                            _currentFragmentLength += payloadLength;
+                        }
+                        if (payloadLength == 126 && dataLength >= 4)
+                        {
+                            _currentFragmentLength += buffer[fragmentStart + 2] << 8 | buffer[fragmentStart + 3];
+                            _currentFragmentLength += 2;
+                        }
+                        if (payloadLength == 127 && dataLength >= 10)
+                        {
+                            _currentFragmentLength +=
+                                (buffer[fragmentStart + 2] << 56 |
+                                 buffer[fragmentStart + 3] << 48 |
+                                 buffer[fragmentStart + 4] << 40 |
+                                 buffer[fragmentStart + 5] << 32 |
+                                 buffer[fragmentStart + 6] << 24 |
+                                 buffer[fragmentStart + 7] << 16 |
+                                 buffer[fragmentStart + 8] << 8 |
+                                 buffer[fragmentStart + 9]);
+                            _currentFragmentLength += 8;
+                        }
 
-                    if ((buffer[1] & 0x80) != 0) _currentFragmentLength += 4;
+                        if ((buffer[fragmentStart + 1] & 0x80) != 0) _currentFragmentLength += 4;
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
-                else
+
+                if ((dataLength - fragmentStart) < _currentFragmentLength)
                 {
+                    _dataBuffer = new MemoryStream();
+                    _dataBuffer.Write(buffer, fragmentStart, (int)(dataLength - fragmentStart));
                     return false;
                 }
+
+                var fragmentBuffer = new byte[_currentFragmentLength];
+                Array.Copy(buffer, fragmentStart, fragmentBuffer, 0, _currentFragmentLength);
+
+                var fragment = new WebSocketFragment(fragmentBuffer);
+                OnWebSocketFragmentRecieved(this, new WebSocketFragmentRecievedEventArgs(fragment));
+
+                fragmentStart += _currentFragmentLength;
+
+                _currentFragmentLength = 0;
             }
-
-            if (dataLength < _currentFragmentLength)
-            {
-                return false;
-            }
-
-            buffer = _dataBuffer.GetBuffer();
-            var fragmentBuffer = new byte[_currentFragmentLength];
-            Array.Copy(buffer, 0, fragmentBuffer, 0, _currentFragmentLength);
-
-            var fragment = new WebSocketFragment(fragmentBuffer);
-            OnWebSocketFragmentRecieved(this, new WebSocketFragmentRecievedEventArgs(fragment));
-
-            var bufferLength = _dataBuffer.Length;
-            _dataBuffer = new MemoryStream();
-            if (bufferLength > _currentFragmentLength)
-            {
-                _dataBuffer.Write(buffer, _currentFragmentLength, (int)(bufferLength - _currentFragmentLength));
-            }
-            _currentFragmentLength = 0;
 
             return true;
         }
 
-        private void WriteData()
+        private void WriteData(WebSocketFragment fragment)
         {
-            lock (_sendFragmentQueue)
+            var fragmentData = fragment.GetBuffer();
+
+            _stream.BeginWrite(fragmentData, 0, fragmentData.Length, AsynWriteHandler, _stream);
+        }
+
+        private void AsynWriteHandler(IAsyncResult ar)
+        {
+            var str = (NetworkStream)ar.AsyncState;
+            str.EndWrite(ar);
+        }
+
+        private void StopWriterThread()
+        {
+            Status = WebSocketConnectionStatus.Closed;
+        }
+
+        private void NotifyWebSocketFragmentRecieved(object data)
+        {
+            var e = (WebSocketFragmentRecievedEventArgs)data;
+            if (WebSocketFragmentRecieved != null)
             {
-                while (_sendFragmentQueue.Count != 0)
-                {
-                    var fragment = GetFragmentFromSendQueue();
-                    var fragmentData = fragment.GetBuffer();
-                    _stream.Write(fragmentData, 0, fragmentData.Length);
-                }
+                WebSocketFragmentRecieved(this, e);
             }
-            OnSendQueueEmpty(this, new EventArgs());
         }
 
         public event EventHandler<WebSocketFragmentRecievedEventArgs> WebSocketFragmentRecieved;
         protected void OnWebSocketFragmentRecieved(object sender, WebSocketFragmentRecievedEventArgs e)
         {
-            if (WebSocketFragmentRecieved != null)
-            {
-                WebSocketFragmentRecieved(sender, e);
-            }
+            ThreadPool.QueueUserWorkItem(NotifyWebSocketFragmentRecieved, e);
 
             if(!e.Fragment.Fin)
             {
@@ -269,14 +285,15 @@ namespace WebTyphoon
         {
             SendFragment(fragment);
 
-            Status = WebSocketConnectionStatus.Closed;
-            OnClosed(this, new WebSocketConnectionStateChangeEventArgs { Connection = this });
             SendQueueEmpty += (s, e) => CloseNetworkStream();
         }
 
         private void CloseNetworkStream()
         {
             _stream.Close();
+            Status = WebSocketConnectionStatus.Closed;
+            OnClosed(this, new WebSocketConnectionStateChangeEventArgs { Connection = this });
+            StopWriterThread();
         }
 
         public event EventHandler<WebSocketConnectionStateChangeEventArgs> Closing;

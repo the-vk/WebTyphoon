@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
+using log4net;
 
 namespace WebTyphoon
 {
@@ -37,6 +38,8 @@ namespace WebTyphoon
 
     public class WebSocketConnection
     {
+        private static ILog _log = log4net.LogManager.GetLogger("WebTyphoon");
+
         private readonly NetworkStream _stream;
 
         private int _currentFragmentLength;
@@ -95,9 +98,10 @@ namespace WebTyphoon
 
                 StartRead();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                
+                _log.Error("Error during read from socket", ex);
+                FailConnection("Read error");
             }
             
         }
@@ -109,9 +113,9 @@ namespace WebTyphoon
             CheckForFrame();
         }
 
-        private bool CheckForFrame()
+        private void CheckForFrame()
         {
-            if (_dataBuffer.Length == 0) return false;
+            if (_dataBuffer.Length == 0) return;
 
             byte[] buffer = _dataBuffer.GetBuffer();
             long dataLength = _dataBuffer.Length;
@@ -152,7 +156,7 @@ namespace WebTyphoon
                     }
                     else
                     {
-                        return false;
+                        return;
                     }
                 }
 
@@ -160,7 +164,7 @@ namespace WebTyphoon
                 {
                     _dataBuffer = new MemoryStream();
                     _dataBuffer.Write(buffer, fragmentStart, (int)(dataLength - fragmentStart));
-                    return false;
+                    return;
                 }
 
                 var fragmentBuffer = new byte[_currentFragmentLength];
@@ -173,8 +177,6 @@ namespace WebTyphoon
 
                 _currentFragmentLength = 0;
             }
-
-            return false;
         }
 
         private void WriteData(WebSocketFragment fragment)

@@ -85,15 +85,12 @@ namespace WebTyphoon
             _stream.BeginRead(state.Buffer, 0, InputBufferLength, AsyncReadHandler, state);
         }
 
-        private long fullLength = 0;
-
         private void AsyncReadHandler(IAsyncResult ar)
         {
             var s = (AsyncReadData) ar.AsyncState;
             try
             {
                 var readBytes = s.Stream.EndRead(ar);
-                fullLength += readBytes;
                 ReadData(s.Buffer, readBytes);
 
                 StartRead();

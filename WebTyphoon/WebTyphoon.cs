@@ -31,27 +31,12 @@ namespace WebTyphoon
     {
         private readonly List<WebSocketConnection> _connections;
 
-        //private const int WorkersCount = 10;
-        //private readonly List<WorkerThread> _workers;
-        //private readonly Thread _dispatch;
-
         private readonly Dictionary<string, ConnectionHandlerData> _uriBindings;
 
         public WebTyphoon()
         {
             _connections = new List<WebSocketConnection>();
             _uriBindings = new Dictionary<string, ConnectionHandlerData>();
-
-           // _workers = new List<WorkerThread>();
-
-           // for (var i = 0; i < WorkersCount; ++i)
-           // {
-           //     _workers.Add(CreateWorkerThread());
-           //     _workers[i].Start();
-           // }
-
-           //_dispatch = new Thread(Dispatch);
-           //_dispatch.Start();
         }
 
         public void AcceptConnection(NetworkStream stream)

@@ -24,7 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
-using System.Threading;
 
 namespace WebTyphoon
 {
@@ -151,77 +150,5 @@ namespace WebTyphoon
                 _connections.Remove(cn);
             }
         }
-
-        //private static void Worker(object workerData)
-        //{
-        //    var data = (WorkerStartData) workerData;
-        //    var workerQueue = data.Queue;
-        //    var workSignal = data.WorkSignal;
-
-        //    while (true)
-        //    {
-        //        while (workerQueue.Count != 0)
-        //        {
-        //            WebSocketConnection cn;
-        //            lock (workerQueue)
-        //            {
-        //                cn = workerQueue.Dequeue();
-        //            }
-        //            if (cn.HasWork)
-        //            {
-        //                cn.Process();
-        //                cn.Processing = false;
-        //            }
-        //        }
-        //        workSignal.WaitOne();
-        //    }
-        //}
-
-        //private void Dispatch()
-        //{
-        //    while (true)
-        //    {
-        //        IEnumerable<WebSocketConnection> cons;
-        //        lock (_connections)
-        //        {
-        //            cons = _connections.ToArray();
-        //        }
-        //        foreach (var c in cons)
-        //        {
-        //            if (c.Status != WebSocketConnectionStatus.Closed && !c.Processing && c.HasWork)
-        //            {
-        //                lock (_workers)
-        //                {
-        //                    var freeQueueWorker = (from w in _workers orderby w.Queue.Count ascending select w).First();
-        //                    c.Processing = true;
-        //                    lock (freeQueueWorker.Queue)
-        //                    {
-        //                        freeQueueWorker.Queue.Enqueue(c);
-        //                        freeQueueWorker.WorkSignal.Set();
-        //                    }
-        //                }
-        //            }
-        //        }
-        //        Thread.Sleep(1);
-        //    }
-        //}
-
-        //private WorkerThread CreateWorkerThread()
-        //{
-        //    var wt = new WorkerThread
-        //                 {
-        //                     Queue = new Queue<WebSocketConnection>(), 
-        //                     Worker = new Thread(Worker),
-        //                     WorkSignal = new EventWaitHandle(false, EventResetMode.AutoReset)
-        //                 };
-
-        //    return wt;
-        //}
-    }
-
-    struct WorkerStartData
-    {
-        public Queue<WebSocketConnection> Queue;
-        public EventWaitHandle WorkSignal;
     }
 }

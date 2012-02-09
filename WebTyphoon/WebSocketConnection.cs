@@ -38,7 +38,7 @@ namespace WebTyphoon
 
     public class WebSocketConnection
     {
-        private static ILog _log = log4net.LogManager.GetLogger("WebTyphoon");
+        private static readonly ILog Log = LogManager.GetLogger("WebTyphoon");
 
         private readonly NetworkStream _stream;
 
@@ -97,7 +97,7 @@ namespace WebTyphoon
             }
             catch (Exception ex)
             {
-                _log.Error("Error during read from socket", ex);
+                Log.Error("Error during read from socket", ex);
                 FailConnection("Read error");
             }
             
@@ -180,13 +180,22 @@ namespace WebTyphoon
         {
             var fragmentData = fragment.GetBuffer();
 
-            _stream.BeginWrite(fragmentData, 0, fragmentData.Length, AsynWriteHandler, _stream);
+            _stream.BeginWrite(fragmentData, 0, fragmentData.Length, AsyncWriteHandler, _stream);
         }
 
-        private void AsynWriteHandler(IAsyncResult ar)
+        private void AsyncWriteHandler(IAsyncResult ar)
         {
-            var str = (NetworkStream)ar.AsyncState;
-            str.EndWrite(ar);
+            try
+            {
+                var str = (NetworkStream)ar.AsyncState;
+                str.EndWrite(ar);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error during write to socket", ex);
+                FailConnection();
+            }
+            
         }
 
         private void StopWriterThread()

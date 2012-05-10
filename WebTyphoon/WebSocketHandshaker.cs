@@ -57,9 +57,17 @@ namespace WebTyphoon
             var sw = new StreamWriter(_stream);
             var strings = new List<string>();
             string str;
-            while(!String.IsNullOrEmpty((str = sr.ReadLine())))
+            try
             {
-                strings.Add(str);
+                while (!String.IsNullOrEmpty((str = sr.ReadLine())))
+                {
+                    strings.Add(str);
+                }
+            }
+            catch (IOException ex)
+            {
+                OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, null, null, null, null));
+                return;
             }
 
             var message = new HttpMessage(strings);
@@ -73,12 +81,20 @@ namespace WebTyphoon
 
             if(!message.Headers.ContainsKey("Upgrade") || message.Headers["Upgrade"] != "websocket" ||
                !message.Headers.ContainsKey("Sec-WebSocket-Version") || message.Headers["Sec-WebSocket-Version"] != "13" ||
-               !message.Headers.ContainsKey("Sec-WebSocket-Key") ||
-               !message.Headers.ContainsKey("Origin") ||
-               !hd.AcceptedOrigins.Contains(message.Headers["Origin"]))
+               !message.Headers.ContainsKey("Sec-WebSocket-Key"))
             {
                 OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message.Headers["Origin"], null, message.Headers));
                 return;
+            }
+
+            if(hd.AcceptedOrigins != null)
+            {
+                if(!message.Headers.ContainsKey("Origin") ||
+                    !hd.AcceptedOrigins.Contains(message.Headers["Origin"]))
+                {
+                    OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message.Headers["Origin"], null, message.Headers));
+                    return;
+                }
             }
 
             string responseProtocolsString = null;
@@ -134,6 +150,12 @@ namespace WebTyphoon
 
         protected void OnHandshakeFailed(object sender, WebSocketConnectionEventArgs e)
         {
+            var sw = new StreamWriter(_stream);
+            sw.WriteLine("HTTP/1.1 404 Not Found");
+            sw.WriteLine();
+            sw.Flush();
+            sw.Close();
+
             if(HandshakeFailed != null)
             {
                 HandshakeFailed(sender, e);

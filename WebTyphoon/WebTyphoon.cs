@@ -54,8 +54,8 @@ namespace WebTyphoon
             EventHandler<WebSocketConnectionAcceptEventArgs> connectionAcceptHandler,
             EventHandler<WebSocketConnectionEventArgs> connectionSuccessHandler)
         {
-            var originsList = origins.ToList();
-            var protocolsList = protocols.ToList();
+            var originsList = origins != null ? origins.ToList() : null;
+            var protocolsList = protocols != null ? protocols.ToList() : null;
             foreach (var u in uris)
             {
                 var hd = new ConnectionHandlerData

@@ -48,6 +48,19 @@ namespace WebTyphoon
             handshaker.Handshake();
         }
 
+		public void AddUriBinding(string uri, 
+			string protocol, 
+			string origin, 
+			EventHandler<WebSocketConnectionAcceptEventArgs> connectionAcceptHandler,
+            EventHandler<WebSocketConnectionEventArgs> connectionSuccessHandler)
+		{
+			var uris = new string[] {uri};
+			var protocols = new string[] {protocol};
+			var origins = new string[] {origin};
+
+			AddUriBinding(uris, protocols, origins, connectionAcceptHandler, connectionSuccessHandler);
+		}
+
         public void AddUriBinding(IEnumerable<string> uris,
             IEnumerable<string> protocols,
             IEnumerable<string> origins,

@@ -54,6 +54,7 @@
     <Compile Include="WebSocketFragment.cs" />
     <Compile Include="WebSocketFragmentRecievedEventArgs.cs" />
     <Compile Include="WebSocketHandshaker.cs" />
+    <Compile Include="WebSocketMessageRecievedEventArgs.cs" />
     <Compile Include="WebTyphoon.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

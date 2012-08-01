@@ -203,6 +203,24 @@ namespace WebTyphoon
             Status = WebSocketConnectionStatus.Closed;
         }
 
+	    public event EventHandler<WebSocketMessageRecievedEventArgs> TextMessageRecieved;
+		protected void OnTextMessageRecieved(object sender, WebSocketMessageRecievedEventArgs e)
+		{
+			if (TextMessageRecieved != null)
+			{
+				TextMessageRecieved(sender, e);
+			}
+		}
+
+	    public event EventHandler<WebSocketMessageRecievedEventArgs> BinaryMessageRecieved;
+		protected void OnBinaryMessageRecieved(object sender, WebSocketMessageRecievedEventArgs e)
+		{
+			if (BinaryMessageRecieved != null)
+			{
+				BinaryMessageRecieved(sender, e);
+			}
+		}
+
         private void NotifyWebSocketFragmentRecieved(object data)
         {
             var e = (WebSocketFragmentRecievedEventArgs)data;
@@ -210,6 +228,25 @@ namespace WebTyphoon
             {
                 WebSocketFragmentRecieved(this, e);
             }
+
+			if (e.Fragment.Fin)
+			{
+				var mre = new WebSocketMessageRecievedEventArgs();
+
+				switch (e.Fragment.OpCode)
+				{
+					case OpCode.TextFrame:
+						mre.Text = e.Fragment.PayloadString;
+						OnTextMessageRecieved(this, mre);
+						break;
+					case OpCode.BinaryFrame:
+						mre.Binary = e.Fragment.PayloadBinary;
+						OnBinaryMessageRecieved(this, mre);
+						break;
+					default:
+						return;
+				}
+			}
         }
 
         public event EventHandler<WebSocketFragmentRecievedEventArgs> WebSocketFragmentRecieved;

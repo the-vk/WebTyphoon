@@ -71,6 +71,12 @@ namespace WebTyphoon
             _sendFragmentQueue = new Queue<WebSocketFragment>();
         }
 
+		public void SendText(string message)
+		{
+			var fragment = new WebSocketFragment(true, OpCode.TextFrame, message);
+			SendFragment(fragment);
+		}
+
         public void SendFragment(WebSocketFragment fragment)
         {
             if(Status != WebSocketConnectionStatus.Open) throw new InvalidOperationException("Connection is not open");

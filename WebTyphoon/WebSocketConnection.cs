@@ -104,7 +104,7 @@ namespace WebTyphoon
 			catch (Exception ex)
 			{
 				Log.Error("Error during read from socket", ex);
-				FailConnection("Read error");
+				FailConnection("Read error", false);
 			}
 			
 		}
@@ -199,7 +199,7 @@ namespace WebTyphoon
 			catch (Exception ex)
 			{
 				Log.Error("Error during write to socket", ex);
-				FailConnection();
+				FailConnection(true);
 			}
 			
 		}
@@ -264,7 +264,7 @@ namespace WebTyphoon
 			{
 				if (_fragmentsList.Count == 0 && e.Fragment.OpCode == OpCode.ContinuationFrame)
 				{
-					FailConnection();
+					FailConnection(true);
 					return;
 				}
 				_fragmentsList.Add(e.Fragment);
@@ -282,7 +282,7 @@ namespace WebTyphoon
 					case OpCode.ContinuationFrame:
 						if(_fragmentsList.Count == 0)
 						{
-							FailConnection("No starting fragment");
+							FailConnection("No starting fragment", true);
 							return;
 						}
 						var concatFragment = ConcatFragments();
@@ -308,14 +308,24 @@ namespace WebTyphoon
 			return fragment;
 		}
 
-		protected void FailConnection()
+		protected void FailConnection(bool sendCloseFragment)
 		{
-			CloseConnection("Websocket failed");
+			this.FailConnection("Websocket failed", sendCloseFragment);
 		}
 
-		protected void FailConnection(string reason)
+		protected void FailConnection(string reason, bool sendCloseFragment)
 		{
-			CloseConnection(reason);
+			var e = new WebSocketConnectionFailedEventArgs()
+			{
+				Reason = reason
+			};
+
+			this.OnFailed(this, e);
+
+			if (sendCloseFragment)
+			{
+				this.CloseConnection(reason);
+			}			
 		}
 
 		protected void SendPongFrame(WebSocketFragment fragment)
@@ -346,6 +356,15 @@ namespace WebTyphoon
 			Status = WebSocketConnectionStatus.Closed;
 			OnClosed(this, new WebSocketConnectionStateChangeEventArgs { Connection = this });
 			StopWriterThread();
+		}
+
+		public event EventHandler<WebSocketConnectionFailedEventArgs> Failed;
+		protected void OnFailed(object sender, WebSocketConnectionFailedEventArgs e)
+		{
+			if (this.Failed != null)
+			{
+				this.Failed(sender, e);
+			}
 		}
 
 		public event EventHandler<WebSocketConnectionStateChangeEventArgs> Closing;

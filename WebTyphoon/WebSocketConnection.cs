@@ -88,7 +88,15 @@ namespace WebTyphoon
 		{
 			var state = new AsyncReadData {Stream = _stream, Buffer = new byte[InputBufferLength]};
 
-			_stream.BeginRead(state.Buffer, 0, InputBufferLength, AsyncReadHandler, state);
+			try
+			{
+				_stream.BeginRead(state.Buffer, 0, InputBufferLength, AsyncReadHandler, state);
+			}
+			catch (Exception ex)
+			{
+				Log.Error("Error while starting read fron network stream.", ex);
+				FailConnection(false);
+			}
 		}
 
 		private void AsyncReadHandler(IAsyncResult ar)
@@ -186,7 +194,14 @@ namespace WebTyphoon
 		{
 			var fragmentData = fragment.GetBuffer();
 
-			_stream.BeginWrite(fragmentData, 0, fragmentData.Length, AsyncWriteHandler, _stream);
+			try
+			{
+				_stream.BeginWrite(fragmentData, 0, fragmentData.Length, AsyncWriteHandler, _stream);
+			}
+			catch (Exception ex)
+			{
+				Log.Error("Error while starting write to network stream.", ex);
+			}
 		}
 
 		private void AsyncWriteHandler(IAsyncResult ar)

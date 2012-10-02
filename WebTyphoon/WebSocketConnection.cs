@@ -29,47 +29,47 @@ using log4net;
 
 namespace WebTyphoon
 {
-    public enum WebSocketConnectionStatus
-    {
-        Open,
-        Closing,
-        Closed
-    }
+	public enum WebSocketConnectionStatus
+	{
+		Open,
+		Closing,
+		Closed
+	}
 
-    public class WebSocketConnection
-    {
-        private static readonly ILog Log = LogManager.GetLogger("WebTyphoon");
+	public class WebSocketConnection
+	{
+		private static readonly ILog Log = LogManager.GetLogger("WebTyphoon");
 
-        private readonly NetworkStream _stream;
+		private readonly NetworkStream _stream;
 
-        private int _currentFragmentLength;
-        private MemoryStream _dataBuffer;
-        private readonly List<WebSocketFragment> _fragmentsList;
-        private readonly Queue<WebSocketFragment> _sendFragmentQueue;
+		private int _currentFragmentLength;
+		private MemoryStream _dataBuffer;
+		private readonly List<WebSocketFragment> _fragmentsList;
+		private readonly Queue<WebSocketFragment> _sendFragmentQueue;
 
-        private const int InputBufferLength = 102400;
+		private const int InputBufferLength = 102400;
 
-        public WebSocketConnectionStatus Status { get; set; }
+		public WebSocketConnectionStatus Status { get; set; }
 
-        public string Uri { get; internal set; }
-        public IEnumerable<string> Protocols { get; internal set; }
-        public string Origin { get; internal set; }
+		public string Uri { get; internal set; }
+		public IEnumerable<string> Protocols { get; internal set; }
+		public string Origin { get; internal set; }
 
 
-        internal bool HasWork
-        {
-            get { return _stream.DataAvailable || _sendFragmentQueue.Count != 0; }
-        }
+		internal bool HasWork
+		{
+			get { return _stream.DataAvailable || _sendFragmentQueue.Count != 0; }
+		}
 
-        public WebSocketConnection(NetworkStream stream)
-        {
-            Status = WebSocketConnectionStatus.Open;
+		public WebSocketConnection(NetworkStream stream)
+		{
+			Status = WebSocketConnectionStatus.Open;
 
-            _stream = stream;
-            _dataBuffer = new MemoryStream();
-            _fragmentsList = new List<WebSocketFragment>();
-            _sendFragmentQueue = new Queue<WebSocketFragment>();
-        }
+			_stream = stream;
+			_dataBuffer = new MemoryStream();
+			_fragmentsList = new List<WebSocketFragment>();
+			_sendFragmentQueue = new Queue<WebSocketFragment>();
+		}
 
 		public void SendText(string message)
 		{
@@ -77,139 +77,139 @@ namespace WebTyphoon
 			SendFragment(fragment);
 		}
 
-        public void SendFragment(WebSocketFragment fragment)
-        {
-            if(Status != WebSocketConnectionStatus.Open) throw new InvalidOperationException("Connection is not open");
+		public void SendFragment(WebSocketFragment fragment)
+		{
+			if(Status != WebSocketConnectionStatus.Open) throw new InvalidOperationException("Connection is not open");
 
-            WriteData(fragment);
-        }
+			WriteData(fragment);
+		}
 
-        internal void StartRead()
-        {
-            var state = new AsyncReadData {Stream = _stream, Buffer = new byte[InputBufferLength]};
+		internal void StartRead()
+		{
+			var state = new AsyncReadData {Stream = _stream, Buffer = new byte[InputBufferLength]};
 
-            _stream.BeginRead(state.Buffer, 0, InputBufferLength, AsyncReadHandler, state);
-        }
+			_stream.BeginRead(state.Buffer, 0, InputBufferLength, AsyncReadHandler, state);
+		}
 
-        private void AsyncReadHandler(IAsyncResult ar)
-        {
-            var s = (AsyncReadData) ar.AsyncState;
-            try
-            {
-                var readBytes = s.Stream.EndRead(ar);
-                ReadData(s.Buffer, readBytes);
+		private void AsyncReadHandler(IAsyncResult ar)
+		{
+			var s = (AsyncReadData) ar.AsyncState;
+			try
+			{
+				var readBytes = s.Stream.EndRead(ar);
+				ReadData(s.Buffer, readBytes);
 
-                StartRead();
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Error during read from socket", ex);
-                FailConnection("Read error");
-            }
-            
-        }
+				StartRead();
+			}
+			catch (Exception ex)
+			{
+				Log.Error("Error during read from socket", ex);
+				FailConnection("Read error");
+			}
+			
+		}
 
-        private void ReadData(byte[] buffer, int readBytes)
-        {
-            _dataBuffer.Write(buffer, 0, readBytes);
+		private void ReadData(byte[] buffer, int readBytes)
+		{
+			_dataBuffer.Write(buffer, 0, readBytes);
 
-            CheckForFrame();
-        }
+			CheckForFrame();
+		}
 
-        private void CheckForFrame()
-        {
-            if (_dataBuffer.Length == 0) return;
+		private void CheckForFrame()
+		{
+			if (_dataBuffer.Length == 0) return;
 
-            byte[] buffer = _dataBuffer.GetBuffer();
-            long dataLength = _dataBuffer.Length;
-            var fragmentStart = 0;
-            while (fragmentStart < dataLength)
-            {
-                if (_currentFragmentLength == 0)
-                {
-                    if (dataLength >= 2)
-                    {
-                        _currentFragmentLength = 2;
+			byte[] buffer = _dataBuffer.GetBuffer();
+			long dataLength = _dataBuffer.Length;
+			var fragmentStart = 0;
+			while (fragmentStart < dataLength)
+			{
+				if (_currentFragmentLength == 0)
+				{
+					if (dataLength >= 2)
+					{
+						_currentFragmentLength = 2;
 
-                        var payloadLength = buffer[fragmentStart + 1] & 0x7F;
-                        if (payloadLength <= 125)
-                        {
-                            _currentFragmentLength += payloadLength;
-                        }
-                        if (payloadLength == 126 && dataLength >= 4)
-                        {
-                            _currentFragmentLength += buffer[fragmentStart + 2] << 8 | buffer[fragmentStart + 3];
-                            _currentFragmentLength += 2;
-                        }
-                        if (payloadLength == 127 && dataLength >= 10)
-                        {
-                            _currentFragmentLength +=
-                                (buffer[fragmentStart + 2] << 56 |
-                                 buffer[fragmentStart + 3] << 48 |
-                                 buffer[fragmentStart + 4] << 40 |
-                                 buffer[fragmentStart + 5] << 32 |
-                                 buffer[fragmentStart + 6] << 24 |
-                                 buffer[fragmentStart + 7] << 16 |
-                                 buffer[fragmentStart + 8] << 8 |
-                                 buffer[fragmentStart + 9]);
-                            _currentFragmentLength += 8;
-                        }
+						var payloadLength = buffer[fragmentStart + 1] & 0x7F;
+						if (payloadLength <= 125)
+						{
+							_currentFragmentLength += payloadLength;
+						}
+						if (payloadLength == 126 && dataLength >= 4)
+						{
+							_currentFragmentLength += buffer[fragmentStart + 2] << 8 | buffer[fragmentStart + 3];
+							_currentFragmentLength += 2;
+						}
+						if (payloadLength == 127 && dataLength >= 10)
+						{
+							_currentFragmentLength +=
+								(buffer[fragmentStart + 2] << 56 |
+								 buffer[fragmentStart + 3] << 48 |
+								 buffer[fragmentStart + 4] << 40 |
+								 buffer[fragmentStart + 5] << 32 |
+								 buffer[fragmentStart + 6] << 24 |
+								 buffer[fragmentStart + 7] << 16 |
+								 buffer[fragmentStart + 8] << 8 |
+								 buffer[fragmentStart + 9]);
+							_currentFragmentLength += 8;
+						}
 
-                        if ((buffer[fragmentStart + 1] & 0x80) != 0) _currentFragmentLength += 4;
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
+						if ((buffer[fragmentStart + 1] & 0x80) != 0) _currentFragmentLength += 4;
+					}
+					else
+					{
+						return;
+					}
+				}
 
-                if ((dataLength - fragmentStart) < _currentFragmentLength)
-                {
-                    _dataBuffer = new MemoryStream();
-                    _dataBuffer.Write(buffer, fragmentStart, (int)(dataLength - fragmentStart));
-                    return;
-                }
+				if ((dataLength - fragmentStart) < _currentFragmentLength)
+				{
+					_dataBuffer = new MemoryStream();
+					_dataBuffer.Write(buffer, fragmentStart, (int)(dataLength - fragmentStart));
+					return;
+				}
 
-                var fragmentBuffer = new byte[_currentFragmentLength];
-                Array.Copy(buffer, fragmentStart, fragmentBuffer, 0, _currentFragmentLength);
+				var fragmentBuffer = new byte[_currentFragmentLength];
+				Array.Copy(buffer, fragmentStart, fragmentBuffer, 0, _currentFragmentLength);
 
-                var fragment = new WebSocketFragment(fragmentBuffer);
-                OnWebSocketFragmentRecieved(this, new WebSocketFragmentRecievedEventArgs(fragment));
+				var fragment = new WebSocketFragment(fragmentBuffer);
+				OnWebSocketFragmentRecieved(this, new WebSocketFragmentRecievedEventArgs(fragment));
 
-                fragmentStart += _currentFragmentLength;
+				fragmentStart += _currentFragmentLength;
 
-                _currentFragmentLength = 0;
-            }
-        }
+				_currentFragmentLength = 0;
+			}
+		}
 
-        private void WriteData(WebSocketFragment fragment)
-        {
-            var fragmentData = fragment.GetBuffer();
+		private void WriteData(WebSocketFragment fragment)
+		{
+			var fragmentData = fragment.GetBuffer();
 
-            _stream.BeginWrite(fragmentData, 0, fragmentData.Length, AsyncWriteHandler, _stream);
-        }
+			_stream.BeginWrite(fragmentData, 0, fragmentData.Length, AsyncWriteHandler, _stream);
+		}
 
-        private void AsyncWriteHandler(IAsyncResult ar)
-        {
-            try
-            {
-                var str = (NetworkStream)ar.AsyncState;
-                str.EndWrite(ar);
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Error during write to socket", ex);
-                FailConnection();
-            }
-            
-        }
+		private void AsyncWriteHandler(IAsyncResult ar)
+		{
+			try
+			{
+				var str = (NetworkStream)ar.AsyncState;
+				str.EndWrite(ar);
+			}
+			catch (Exception ex)
+			{
+				Log.Error("Error during write to socket", ex);
+				FailConnection();
+			}
+			
+		}
 
-        private void StopWriterThread()
-        {
-            Status = WebSocketConnectionStatus.Closed;
-        }
+		private void StopWriterThread()
+		{
+			Status = WebSocketConnectionStatus.Closed;
+		}
 
-	    public event EventHandler<WebSocketMessageRecievedEventArgs> TextMessageRecieved;
+		public event EventHandler<WebSocketMessageRecievedEventArgs> TextMessageRecieved;
 		protected void OnTextMessageRecieved(object sender, WebSocketMessageRecievedEventArgs e)
 		{
 			if (TextMessageRecieved != null)
@@ -218,7 +218,7 @@ namespace WebTyphoon
 			}
 		}
 
-	    public event EventHandler<WebSocketMessageRecievedEventArgs> BinaryMessageRecieved;
+		public event EventHandler<WebSocketMessageRecievedEventArgs> BinaryMessageRecieved;
 		protected void OnBinaryMessageRecieved(object sender, WebSocketMessageRecievedEventArgs e)
 		{
 			if (BinaryMessageRecieved != null)
@@ -227,13 +227,13 @@ namespace WebTyphoon
 			}
 		}
 
-        private void NotifyWebSocketFragmentRecieved(object data)
-        {
-            var e = (WebSocketFragmentRecievedEventArgs)data;
-            if (WebSocketFragmentRecieved != null)
-            {
-                WebSocketFragmentRecieved(this, e);
-            }
+		private void NotifyWebSocketFragmentRecieved(object data)
+		{
+			var e = (WebSocketFragmentRecievedEventArgs)data;
+			if (WebSocketFragmentRecieved != null)
+			{
+				WebSocketFragmentRecieved(this, e);
+			}
 
 			if (e.Fragment.Fin)
 			{
@@ -253,126 +253,126 @@ namespace WebTyphoon
 						return;
 				}
 			}
-        }
+		}
 
-        public event EventHandler<WebSocketFragmentRecievedEventArgs> WebSocketFragmentRecieved;
-        protected void OnWebSocketFragmentRecieved(object sender, WebSocketFragmentRecievedEventArgs e)
-        {
-            ThreadPool.QueueUserWorkItem(NotifyWebSocketFragmentRecieved, e);
+		public event EventHandler<WebSocketFragmentRecievedEventArgs> WebSocketFragmentRecieved;
+		protected void OnWebSocketFragmentRecieved(object sender, WebSocketFragmentRecievedEventArgs e)
+		{
+			ThreadPool.QueueUserWorkItem(NotifyWebSocketFragmentRecieved, e);
 
-            if(!e.Fragment.Fin)
-            {
-                if (_fragmentsList.Count == 0 && e.Fragment.OpCode == OpCode.ContinuationFrame)
-                {
-                    FailConnection();
-                    return;
-                }
-                _fragmentsList.Add(e.Fragment);
-            }
-            else
-            {
-                switch (e.Fragment.OpCode)
-                {
-                    case OpCode.Ping:
-                        SendPongFrame(e.Fragment);
-                        break;
-                    case OpCode.ConnectionClose:
-                        CloseConnection(e.Fragment);
-                        break;
-                    case OpCode.ContinuationFrame:
-                        if(_fragmentsList.Count == 0)
-                        {
-                            FailConnection("No starting fragment");
-                            return;
-                        }
-                        var concatFragment = ConcatFragments();
-                        OnWebSocketFragmentRecieved(sender, new WebSocketFragmentRecievedEventArgs(concatFragment));
-                        break;
-                }
-            }
-        }
+			if(!e.Fragment.Fin)
+			{
+				if (_fragmentsList.Count == 0 && e.Fragment.OpCode == OpCode.ContinuationFrame)
+				{
+					FailConnection();
+					return;
+				}
+				_fragmentsList.Add(e.Fragment);
+			}
+			else
+			{
+				switch (e.Fragment.OpCode)
+				{
+					case OpCode.Ping:
+						SendPongFrame(e.Fragment);
+						break;
+					case OpCode.ConnectionClose:
+						CloseConnection(e.Fragment);
+						break;
+					case OpCode.ContinuationFrame:
+						if(_fragmentsList.Count == 0)
+						{
+							FailConnection("No starting fragment");
+							return;
+						}
+						var concatFragment = ConcatFragments();
+						OnWebSocketFragmentRecieved(sender, new WebSocketFragmentRecievedEventArgs(concatFragment));
+						break;
+				}
+			}
+		}
 
-        protected WebSocketFragment ConcatFragments()
-        {
-            var data = new MemoryStream();
-            foreach (var f in _fragmentsList)
-            {
-                var payload = f.PayloadBinary;
-                data.Write(payload, 0, payload.Length);
-            }
-            var firstFragment = _fragmentsList[0];
-            var fragment = new WebSocketFragment(true, firstFragment.OpCode, data.GetBuffer(), null, firstFragment.RSV1,
-                                                 firstFragment.RSV2, firstFragment.RSV3);
+		protected WebSocketFragment ConcatFragments()
+		{
+			var data = new MemoryStream();
+			foreach (var f in _fragmentsList)
+			{
+				var payload = f.PayloadBinary;
+				data.Write(payload, 0, payload.Length);
+			}
+			var firstFragment = _fragmentsList[0];
+			var fragment = new WebSocketFragment(true, firstFragment.OpCode, data.GetBuffer(), null, firstFragment.RSV1,
+												 firstFragment.RSV2, firstFragment.RSV3);
 
-            _fragmentsList.Clear();
-            return fragment;
-        }
+			_fragmentsList.Clear();
+			return fragment;
+		}
 
-        protected void FailConnection()
-        {
-            CloseConnection("Websocket failed");
-        }
+		protected void FailConnection()
+		{
+			CloseConnection("Websocket failed");
+		}
 
-        protected void FailConnection(string reason)
-        {
-            CloseConnection(reason);
-        }
+		protected void FailConnection(string reason)
+		{
+			CloseConnection(reason);
+		}
 
-        protected void SendPongFrame(WebSocketFragment fragment)
-        {
-            var pongFragment = new WebSocketFragment(true, OpCode.Pong, fragment.PayloadString);
-            SendFragment(pongFragment);
-        }
+		protected void SendPongFrame(WebSocketFragment fragment)
+		{
+			var pongFragment = new WebSocketFragment(true, OpCode.Pong, fragment.PayloadString);
+			SendFragment(pongFragment);
+		}
 
-        public void CloseConnection(string reason)
-        {
-            var fragment = new WebSocketFragment(true, OpCode.ConnectionClose, reason);
-            SendFragment(fragment);
+		public void CloseConnection(string reason)
+		{
+			var fragment = new WebSocketFragment(true, OpCode.ConnectionClose, reason);
+			SendFragment(fragment);
 
-            Status = WebSocketConnectionStatus.Closing;
-            OnClosing(this, new WebSocketConnectionStateChangeEventArgs {Connection = this});
-        }
+			Status = WebSocketConnectionStatus.Closing;
+			OnClosing(this, new WebSocketConnectionStateChangeEventArgs {Connection = this});
+		}
 
-        protected void CloseConnection(WebSocketFragment fragment)
-        {
-            SendFragment(fragment);
+		protected void CloseConnection(WebSocketFragment fragment)
+		{
+			SendFragment(fragment);
 
-            SendQueueEmpty += (s, e) => CloseNetworkStream();
-        }
+			SendQueueEmpty += (s, e) => CloseNetworkStream();
+		}
 
-        private void CloseNetworkStream()
-        {
-            _stream.Close();
-            Status = WebSocketConnectionStatus.Closed;
-            OnClosed(this, new WebSocketConnectionStateChangeEventArgs { Connection = this });
-            StopWriterThread();
-        }
+		private void CloseNetworkStream()
+		{
+			_stream.Close();
+			Status = WebSocketConnectionStatus.Closed;
+			OnClosed(this, new WebSocketConnectionStateChangeEventArgs { Connection = this });
+			StopWriterThread();
+		}
 
-        public event EventHandler<WebSocketConnectionStateChangeEventArgs> Closing;
-        protected void OnClosing(object sender, WebSocketConnectionStateChangeEventArgs e)
-        {
-            if(Closing != null)
-            {
-                Closing(sender, e);
-            }
-        }
+		public event EventHandler<WebSocketConnectionStateChangeEventArgs> Closing;
+		protected void OnClosing(object sender, WebSocketConnectionStateChangeEventArgs e)
+		{
+			if(Closing != null)
+			{
+				Closing(sender, e);
+			}
+		}
 
-        public event EventHandler<WebSocketConnectionStateChangeEventArgs> Closed;
-        protected void OnClosed(object sender, WebSocketConnectionStateChangeEventArgs e)
-        {
-            if(Closed != null)
-            {
-                Closed(sender, e);
-            }
-        }
+		public event EventHandler<WebSocketConnectionStateChangeEventArgs> Closed;
+		protected void OnClosed(object sender, WebSocketConnectionStateChangeEventArgs e)
+		{
+			if(Closed != null)
+			{
+				Closed(sender, e);
+			}
+		}
 
-        public event EventHandler<EventArgs> SendQueueEmpty;
-        public void OnSendQueueEmpty(object sender, EventArgs e)
-        {
-            if(SendQueueEmpty != null)
-            {
-                SendQueueEmpty(sender, e);
-            }
-        }
-    }
+		public event EventHandler<EventArgs> SendQueueEmpty;
+		public void OnSendQueueEmpty(object sender, EventArgs e)
+		{
+			if(SendQueueEmpty != null)
+			{
+				SendQueueEmpty(sender, e);
+			}
+		}
+	}
 }

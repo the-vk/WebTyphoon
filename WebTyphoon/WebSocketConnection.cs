@@ -186,6 +186,12 @@ namespace WebTyphoon
 
 				fragmentStart += _currentFragmentLength;
 
+				if (fragmentStart == dataLength)
+				{
+					this._dataBuffer = new MemoryStream();
+					return;
+				}
+
 				_currentFragmentLength = 0;
 			}
 		}

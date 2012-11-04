@@ -55,12 +55,6 @@ namespace WebTyphoon
 		public IEnumerable<string> Protocols { get; internal set; }
 		public string Origin { get; internal set; }
 
-
-		internal bool HasWork
-		{
-			get { return _stream.DataAvailable || _sendFragmentQueue.Count != 0; }
-		}
-
 		public WebSocketConnection(NetworkStream stream)
 		{
 			Status = WebSocketConnectionStatus.Open;
@@ -188,7 +182,8 @@ namespace WebTyphoon
 
 				if (fragmentStart == dataLength)
 				{
-					this._dataBuffer = new MemoryStream();
+					_dataBuffer = new MemoryStream();
+					_currentFragmentLength = 0;
 					return;
 				}
 

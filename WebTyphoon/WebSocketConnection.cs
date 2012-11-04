@@ -99,6 +99,13 @@ namespace WebTyphoon
 			try
 			{
 				var readBytes = s.Stream.EndRead(ar);
+
+				if (readBytes == 0)
+				{
+					CloseNetworkStream();
+					return;
+				}
+
 				ReadData(s.Buffer, readBytes);
 
 				StartRead();
@@ -218,11 +225,6 @@ namespace WebTyphoon
 				FailConnection(true);
 			}
 			
-		}
-
-		private void StopWriterThread()
-		{
-			Status = WebSocketConnectionStatus.Closed;
 		}
 
 		public event EventHandler<WebSocketMessageRecievedEventArgs> TextMessageRecieved;
@@ -371,7 +373,6 @@ namespace WebTyphoon
 			_stream.Close();
 			Status = WebSocketConnectionStatus.Closed;
 			OnClosed(this, new WebSocketConnectionStateChangeEventArgs { Connection = this });
-			StopWriterThread();
 		}
 
 		public event EventHandler<WebSocketConnectionFailedEventArgs> Failed;

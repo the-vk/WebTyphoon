@@ -55,12 +55,6 @@ namespace WebTyphoon
 		public IEnumerable<string> Protocols { get; internal set; }
 		public string Origin { get; internal set; }
 
-
-		internal bool HasWork
-		{
-			get { return _stream.DataAvailable || _sendFragmentQueue.Count != 0; }
-		}
-
 		public WebSocketConnection(NetworkStream stream)
 		{
 			Status = WebSocketConnectionStatus.Open;
@@ -105,6 +99,13 @@ namespace WebTyphoon
 			try
 			{
 				var readBytes = s.Stream.EndRead(ar);
+
+				if (readBytes == 0)
+				{
+					CloseNetworkStream();
+					return;
+				}
+
 				ReadData(s.Buffer, readBytes);
 
 				StartRead();
@@ -186,6 +187,13 @@ namespace WebTyphoon
 
 				fragmentStart += _currentFragmentLength;
 
+				if (fragmentStart == dataLength)
+				{
+					_dataBuffer = new MemoryStream();
+					_currentFragmentLength = 0;
+					return;
+				}
+
 				_currentFragmentLength = 0;
 			}
 		}
@@ -217,11 +225,6 @@ namespace WebTyphoon
 				FailConnection(true);
 			}
 			
-		}
-
-		private void StopWriterThread()
-		{
-			Status = WebSocketConnectionStatus.Closed;
 		}
 
 		public event EventHandler<WebSocketMessageRecievedEventArgs> TextMessageRecieved;
@@ -370,7 +373,6 @@ namespace WebTyphoon
 			_stream.Close();
 			Status = WebSocketConnectionStatus.Closed;
 			OnClosed(this, new WebSocketConnectionStateChangeEventArgs { Connection = this });
-			StopWriterThread();
 		}
 
 		public event EventHandler<WebSocketConnectionFailedEventArgs> Failed;

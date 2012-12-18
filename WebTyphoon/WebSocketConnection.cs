@@ -222,7 +222,7 @@ namespace WebTyphoon
 			catch (Exception ex)
 			{
 				Log.Error("Error during write to socket", ex);
-				FailConnection(true);
+				FailConnection(false);
 			}
 			
 		}

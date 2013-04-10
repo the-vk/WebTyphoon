@@ -22,10 +22,10 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
-using log4net;
 
 namespace WebTyphoon
 {
@@ -38,8 +38,6 @@ namespace WebTyphoon
 
 	public class WebSocketConnection
 	{
-		private static readonly ILog Log = LogManager.GetLogger("WebTyphoon");
-
 		private readonly NetworkStream _stream;
 
 		private int _currentFragmentLength;
@@ -88,7 +86,7 @@ namespace WebTyphoon
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Error while starting read fron network stream.", ex);
+				Debug.WriteLine("Error while starting read fron network stream: {0}", ex);
 				FailConnection(false);
 			}
 		}
@@ -112,7 +110,7 @@ namespace WebTyphoon
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Error during read from socket", ex);
+				Debug.WriteLine("Error during read from socket: {0}", ex);
 				FailConnection("Read error", false);
 			}
 			
@@ -208,7 +206,7 @@ namespace WebTyphoon
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Error while starting write to network stream.", ex);
+				Debug.WriteLine("Error while starting write to network stream: {0}", ex);
 			}
 		}
 
@@ -221,7 +219,7 @@ namespace WebTyphoon
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Error during write to socket", ex);
+				Debug.WriteLine("Error during write to socket: {0}", ex);
 				FailConnection(false);
 			}
 			

@@ -43,7 +43,6 @@ namespace WebTyphoon
 		private int _currentFragmentLength;
 		private MemoryStream _dataBuffer;
 		private readonly List<WebSocketFragment> _fragmentsList;
-		private readonly Queue<WebSocketFragment> _sendFragmentQueue;
 
 		private const int InputBufferLength = 102400;
 
@@ -60,7 +59,6 @@ namespace WebTyphoon
 			_stream = stream;
 			_dataBuffer = new MemoryStream();
 			_fragmentsList = new List<WebSocketFragment>();
-			_sendFragmentQueue = new Queue<WebSocketFragment>();
 		}
 
 		public void SendText(string message)
@@ -326,21 +324,21 @@ namespace WebTyphoon
 
 		protected void FailConnection(bool sendCloseFragment)
 		{
-			this.FailConnection("Websocket failed", sendCloseFragment);
+			FailConnection("Websocket failed", sendCloseFragment);
 		}
 
 		protected void FailConnection(string reason, bool sendCloseFragment)
 		{
-			var e = new WebSocketConnectionFailedEventArgs()
+			var e = new WebSocketConnectionFailedEventArgs
 			{
 				Reason = reason
 			};
 
-			this.OnFailed(this, e);
+			OnFailed(this, e);
 
 			if (sendCloseFragment)
 			{
-				this.CloseConnection(reason);
+				CloseConnection(reason);
 			}			
 		}
 
@@ -376,9 +374,9 @@ namespace WebTyphoon
 		public event EventHandler<WebSocketConnectionFailedEventArgs> Failed;
 		protected void OnFailed(object sender, WebSocketConnectionFailedEventArgs e)
 		{
-			if (this.Failed != null)
+			if (Failed != null)
 			{
-				this.Failed(sender, e);
+				Failed(sender, e);
 			}
 		}
 

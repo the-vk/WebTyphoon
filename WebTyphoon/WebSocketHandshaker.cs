@@ -56,15 +56,15 @@ namespace WebTyphoon
             var sr = new StreamReader(_stream);
             var sw = new StreamWriter(_stream);
             var strings = new List<string>();
-            string str;
-            try
+	        try
             {
-                while (!String.IsNullOrEmpty((str = sr.ReadLine())))
+	            string str;
+	            while (!String.IsNullOrEmpty((str = sr.ReadLine())))
                 {
                     strings.Add(str);
                 }
             }
-            catch (IOException ex)
+            catch (IOException)
             {
                 OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, null, null, null, null));
                 return;
@@ -136,8 +136,8 @@ namespace WebTyphoon
             sw.WriteLine("HTTP/1.1 101 Switching Protocols");
             sw.WriteLine("Upgrade: websocket");
             sw.WriteLine("Connection: Upgrade");
-            sw.WriteLine(string.Format("Sec-WebSocket-Accept: {0}", responseKey));
-            sw.WriteLine(string.Format("Sec-WebSocket-Protocol: {0}", responseProtocolsString));
+            sw.WriteLine("Sec-WebSocket-Accept: {0}", responseKey);
+            sw.WriteLine("Sec-WebSocket-Protocol: {0}", responseProtocolsString);
 
             sw.WriteLine();
 

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebTyphoon", "WebTyphoon\WebTyphoon.csproj", "{D20814A9-F972-4764-A531-EFA4DA4A61C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebTyphoon", "src\WebTyphoon\WebTyphoon.csproj", "{D20814A9-F972-4764-A531-EFA4DA4A61C7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleHost", "ConsoleHost\ConsoleHost.csproj", "{4DAC822A-FB44-4769-BCA6-10462233F5FC}"
 EndProject

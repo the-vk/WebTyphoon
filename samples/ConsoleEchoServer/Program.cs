@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (C) 2012 Andrew 'the vk' Maraev
+Copyright (C) 2012, 2013 Andrew 'the vk' Maraev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+using System;
 using System.Net;
 using System.Net.Sockets;
 
@@ -37,12 +38,31 @@ namespace WebTyphoon.Samples.ConsoleEchoServer
             var tcpListener = new TcpListener(ipEndpoint);
             tcpListener.Start();
 
-            while(true)
-            {
-                var client = tcpListener.AcceptTcpClient();
-                webTyphoon.AcceptConnection(client.GetStream());
-            }
+	        tcpListener.BeginAcceptTcpClient(BeginAcceptClientCallback, new Tuple<TcpListener, WebTyphoon>(tcpListener, webTyphoon));
+
+            Console.WriteLine("Press any key to exit...");
+	        Console.ReadKey(true);
+
+			tcpListener.Stop();
         }
+
+		static void BeginAcceptClientCallback(IAsyncResult ar)
+		{
+			var state = (Tuple<TcpListener, WebTyphoon>)ar.AsyncState;
+			var tcpListener = state.Item1;
+			var webTyphoon = state.Item2;
+
+			var client = tcpListener.EndAcceptTcpClient(ar);
+
+			webTyphoon.AcceptConnection(client.GetStream());
+
+			tcpListener.BeginAcceptTcpClient(BeginAcceptClientCallback, ar.AsyncState);
+		}
+
+		static void Process(WebSocketConnection connection, WebSocketFragment fragment)
+		{
+			connection.SendText(fragment.PayloadString);
+		}
 
         static void WebTyphoonConnectionAccepted(object sender, WebSocketConnectionEventArgs e)
         {
@@ -54,7 +74,7 @@ namespace WebTyphoon.Samples.ConsoleEchoServer
         static void ConnectionWebSocketFragmentRecieved(object sender, WebSocketFragmentRecievedEventArgs e)
         {
 	        var connection = (WebSocketConnection) sender;
-			connection.SendText(e.Fragment.PayloadString);
+			Process(connection, e.Fragment);
         }
 
 		static void ConnectionClosedHandler(object sender, WebSocketConnectionStateChangeEventArgs e)

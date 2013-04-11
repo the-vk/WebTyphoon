@@ -20,26 +20,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using WebTyphoon;
 
-namespace ConsoleHost
+namespace WebTyphoon.Samples.ConsoleEchoServer
 {
     class Program
     {
-        private static WebSocketConnection _connection;
-        private static Stopwatch _stopwatch = new Stopwatch();
-        private static int _i;
-        private const int MessageCount = 100000;
-
         static void Main()
         {
-            var webTyphoon = new WebTyphoon.WebTyphoon();
+            var webTyphoon = new WebTyphoon();
 
-            webTyphoon.AddUriBinding(new[] { "/test" }, new[] { "test" }, new[] { "http://cryoengine.net" }, null, WebTyphoonConnectionAccepted);
+            webTyphoon.AddUriBinding(new[] { "/" }, null, null, null, WebTyphoonConnectionAccepted);
 
             var ipEndpoint = new IPEndPoint(IPAddress.Any, 9000);
             var tcpListener = new TcpListener(ipEndpoint);
@@ -54,30 +46,20 @@ namespace ConsoleHost
 
         static void WebTyphoonConnectionAccepted(object sender, WebSocketConnectionEventArgs e)
         {
-            _connection = e.Connection;
-            _connection.WebSocketFragmentRecieved += ConnectionWebSocketFragmentRecieved;
+            var connection = e.Connection;
+            connection.WebSocketFragmentRecieved += ConnectionWebSocketFragmentRecieved;
+	        connection.Closed += ConnectionClosedHandler;
         }
 
         static void ConnectionWebSocketFragmentRecieved(object sender, WebSocketFragmentRecievedEventArgs e)
         {
-            lock (_stopwatch)
-            {
-                if (_i == 0) _stopwatch.Start();
-                //Console.WriteLine(e.Fragment.PayloadString);
-                //var fragment = new WebTyphoon.WebSocketFragment(true, OpCode.TextFrame, e.Fragment.PayloadString);
-                //_connection.SendFragment(fragment);
-                ++_i;
-                if (_i >= MessageCount)
-                {
-                    _stopwatch.Stop();
-                    var time = (double) _stopwatch.ElapsedTicks/Stopwatch.Frequency;
-                    _stopwatch.Reset();
-                    var messagesPerSec = MessageCount/(time);
-                    Console.WriteLine(messagesPerSec);
-                    _i = 0;
-                    _stopwatch.Start();
-                }
-            }
+	        var connection = (WebSocketConnection) sender;
+			connection.SendText(e.Fragment.PayloadString);
         }
+
+		static void ConnectionClosedHandler(object sender, WebSocketConnectionStateChangeEventArgs e)
+		{
+			e.Connection.WebSocketFragmentRecieved -= ConnectionWebSocketFragmentRecieved;
+		}
     }
 }

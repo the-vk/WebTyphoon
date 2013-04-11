@@ -49,13 +49,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\WebTyphoon\WebTyphoon.csproj">
-      <Project>{D20814A9-F972-4764-A531-EFA4DA4A61C7}</Project>
-      <Name>WebTyphoon</Name>
-    </ProjectReference>
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <ProjectReference Include="..\..\src\WebTyphoon\WebTyphoon.csproj">
+      <Project>{d20814a9-f972-4764-a531-efa4da4a61c7}</Project>
+      <Name>WebTyphoon</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

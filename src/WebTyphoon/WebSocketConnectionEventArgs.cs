@@ -28,6 +28,12 @@ namespace WebTyphoon
 {
     public class WebSocketConnectionEventArgs : EventArgs
     {
+		public WebSocketConnectionEventArgs(WebSocketConnection connection, NetworkStream stream)
+			: this(connection, stream, null, null, null, null)
+		{
+			
+		}
+
         public WebSocketConnectionEventArgs(WebSocketConnection connection, NetworkStream stream,
             string uri,
             string origin,

@@ -48,15 +48,25 @@ namespace WebTyphoon
             handshaker.Handshake();
         }
 
+		public WebSocketConnection AcceptConnection(NetworkStream stream, bool skipHandshaking)
+		{
+			var connection = CreateNewConnection(stream);
+
+			var e = new WebSocketConnectionEventArgs(connection, stream);
+			OnConnectionAccepted(this, e);
+
+			return connection;
+		}
+
 		public void AddUriBinding(string uri, 
 			string protocol, 
 			string origin, 
 			EventHandler<WebSocketConnectionAcceptEventArgs> connectionAcceptHandler,
             EventHandler<WebSocketConnectionEventArgs> connectionSuccessHandler)
 		{
-			var uris = new string[] {uri};
-			var protocols = new string[] {protocol};
-			var origins = new string[] {origin};
+			var uris = new[] {uri};
+			var protocols = new[] {protocol};
+			var origins = new[] {origin};
 
 			AddUriBinding(uris, protocols, origins, connectionAcceptHandler, connectionSuccessHandler);
 		}

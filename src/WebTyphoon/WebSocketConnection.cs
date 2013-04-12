@@ -217,10 +217,9 @@ namespace WebTyphoon
 			}
 			catch (Exception ex)
 			{
-				Debug.WriteLine("Error during write to socket: {0}", ex);
+				Debug.WriteLine("Error while writing to socket: {0}", ex);
 				FailConnection(false);
 			}
-			
 		}
 
 		public event EventHandler<WebSocketMessageRecievedEventArgs> TextMessageRecieved;

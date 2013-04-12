@@ -288,13 +288,22 @@ namespace WebTyphoon
 
         public WebSocketFragment(bool fin, OpCode opCode, byte[] payload = null, byte[] mask = null,  bool rsv1 = false, bool rsv2 = false, bool rsv3 = false)
         {
-            ulong length = 2;
-            if(mask != null)
-            {
-                length += 4;
-            }
+	        ulong length = 2;
+			if (mask != null)
+			{
+				length += 4;
+			}
+	        
             if (payload != null)
             {
+				if (payload.LongLength > 0xFFFF)
+				{
+					length += 8;
+				}
+				else if (payload.LongLength > 0x7D)
+				{
+					length += 2;
+				}
                 length += (ulong) payload.LongLength;
             }
 

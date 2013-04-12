@@ -54,14 +54,14 @@ namespace WebTyphoon
         private void HandshakeAction()
         {
             var sr = new StreamReader(_stream);
-            var sw = new StreamWriter(_stream);
-            var strings = new List<string>();
+            
+            var hanshakeLines = new List<string>();
 	        try
             {
 	            string str;
 	            while (!String.IsNullOrEmpty((str = sr.ReadLine())))
                 {
-                    strings.Add(str);
+                    hanshakeLines.Add(str);
                 }
             }
             catch (IOException)
@@ -70,29 +70,28 @@ namespace WebTyphoon
                 return;
             }
 
-            var message = new HttpMessage(strings);
+            var message = new HttpMessage(hanshakeLines);
 
             var hd = _dispatcher.GetBinding(message.Uri);
             if(hd == null)
             {
-                OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message.Headers["Origin"], null, message.Headers));
+                OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message["Origin"], null, message.Headers));
                 return;
             }
 
-            if(!message.Headers.ContainsKey("Upgrade") || message.Headers["Upgrade"] != "websocket" ||
-               !message.Headers.ContainsKey("Sec-WebSocket-Version") || message.Headers["Sec-WebSocket-Version"] != "13" ||
-               !message.Headers.ContainsKey("Sec-WebSocket-Key"))
+			if (message["Upgrade"] != "websocket" ||
+               message["Sec-WebSocket-Version"] != "13" ||
+               message["Sec-WebSocket-Key"] == null)
             {
-                OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message.Headers["Origin"], null, message.Headers));
+                OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message["Origin"], null, message.Headers));
                 return;
             }
 
             if(hd.AcceptedOrigins != null)
             {
-                if(!message.Headers.ContainsKey("Origin") ||
-                    !hd.AcceptedOrigins.Contains(message.Headers["Origin"]))
+				if (message["Origin"] == null || !hd.AcceptedOrigins.Contains(message["Origin"]))
                 {
-                    OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message.Headers["Origin"], null, message.Headers));
+                    OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message["Origin"], null, message.Headers));
                     return;
                 }
             }
@@ -102,16 +101,16 @@ namespace WebTyphoon
 
             if(hd.AcceptedProtocols != null)
             {
-                if(!message.Headers.ContainsKey("Sec-WebSocket-Protocol"))
+                if(message["Sec-WebSocket-Protocol"] == null)
                 {
-                    OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message.Headers["Origin"], null, message.Headers));
+                    OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message["Origin"], null, message.Headers));
                     return;
                 }
-                var protocols = message.Headers["Sec-WebSocket-Protocol"].Split(',').Select(x => x.Trim());
+                var protocols = message["Sec-WebSocket-Protocol"].Split(',').Select(x => x.Trim());
                 responseProtocols = hd.AcceptedProtocols.Intersect(protocols).ToList();
                 if (!responseProtocols.Any())
                 {
-                    OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message.Headers["Origin"], responseProtocols, message.Headers));
+                    OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message["Origin"], responseProtocols, message.Headers));
                     return;
                 }
 
@@ -120,18 +119,19 @@ namespace WebTyphoon
 
             if(hd.ConnectionAcceptHandler != null)
             {
-                var e = new WebSocketConnectionAcceptEventArgs(message.Uri, message.Headers["Origin"], responseProtocols,
-                                                               message.Headers);
+                var e = new WebSocketConnectionAcceptEventArgs(message.Uri, message["Origin"], responseProtocols, message.Headers);
                 hd.ConnectionAcceptHandler(this, e);
                 if(e.Reject)
                 {
-                    OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message.Headers["Origin"], responseProtocols, message.Headers));
+                    OnHandshakeFailed(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message["Origin"], responseProtocols, message.Headers));
                     return;
                 }
             }
 
-            var key = message.Headers["Sec-WebSocket-Key"];
+            var key = message["Sec-WebSocket-Key"];
             var responseKey = EncodeToBase64SHA1(key + WebSocketKeyGuid);
+
+			var sw = new StreamWriter(_stream);
 
             sw.WriteLine("HTTP/1.1 101 Switching Protocols");
             sw.WriteLine("Upgrade: websocket");
@@ -140,10 +140,9 @@ namespace WebTyphoon
             sw.WriteLine("Sec-WebSocket-Protocol: {0}", responseProtocolsString);
 
             sw.WriteLine();
-
             sw.Flush();
 
-            OnHandshakeSuccess(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message.Headers["Origin"], responseProtocols, message.Headers));
+            OnHandshakeSuccess(this, new WebSocketConnectionEventArgs(null, _stream, message.Uri, message["Origin"], responseProtocols, message.Headers));
         }
 
         public event EventHandler<WebSocketConnectionEventArgs> HandshakeFailed;

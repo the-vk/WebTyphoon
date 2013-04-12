@@ -23,6 +23,7 @@ SOFTWARE.
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Web.UI.WebControls;
 
 namespace WebTyphoon.Samples.ConsoleEchoServer
 {
@@ -61,7 +62,8 @@ namespace WebTyphoon.Samples.ConsoleEchoServer
 
 		static void Process(WebSocketConnection connection, WebSocketFragment fragment)
 		{
-			connection.SendText(fragment.PayloadString);
+			if (fragment.OpCode == OpCode.BinaryFrame || fragment.OpCode == OpCode.TextFrame)
+				connection.SendText(fragment.PayloadString);
 		}
 
         static void WebTyphoonConnectionAccepted(object sender, WebSocketConnectionEventArgs e)

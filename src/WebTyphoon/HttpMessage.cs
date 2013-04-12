@@ -30,7 +30,13 @@ namespace WebTyphoon
         public string Method { get; set; }
         public string Version { get; set; }
         public string Uri { get; set; }
-        public Dictionary<string, string> Headers { get; private set; }
+        public IDictionary<string, string> Headers { get; private set; }
+
+	    public string this[string header]
+	    {
+		    get { return Headers.ContainsKey(header) ? Headers[header] : null; }
+			set { Headers[header] = value; }
+	    }
 
         public HttpMessage()
         {

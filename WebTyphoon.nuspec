@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+	<metadata>
+		<id>WebTyphoon</id>
+		<version>1.0.0</version>
+		<title>WebTyphoon</title>
+		<authors>Andrew Maraev</authors>
+		<owners>Andrew Maraev</owners>
+		<projectUrl>https://github.com/the-vk/WebTyphoon</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>Lightweight implementation of websocket protocol for .Net.</description>
+		<releaseNotes>Initial release.</releaseNotes>
+		<copyright>Copyright 2012, 2013</copyright>
+		<tags>websockets server</tags>
+	</metadata>
+</package>

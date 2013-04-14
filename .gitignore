@@ -1,5 +1,8 @@
 bin/**
+build/**
 obj/**
+
+*.nupkg
 *.suo
 *.user
 _Resharper*/*

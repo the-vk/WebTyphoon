@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="WebTyphoon" basedir="." default="build">
+	<property name="Configuration" value="Release" readonly="true" />
+	<property name="nuget" value=".nuget/nuget.exe" />
+
+	<target name="build">
+		<msbuild project="WebTyphoon.sln">
+			<property name="Configuration" value="${Configuration}" />
+		</msbuild>
+	</target>
+
+	<target name="pack" depends="build">
+		<mkdir dir="build" />
+		<mkdir dir="build/lib" />
+		<mkdir dir="build/lib/net40" />
+
+		<copy todir="build/lib/net40">
+			<fileset basedir="src/WebTyphoon/bin/${Configuration}">
+				<include name="WebTyphoon.dll" />
+				<include name="WebTyphoon.pdb" />
+			</fileset>
+		</copy>
+
+		<copy file="WebTyphoon.nuspec" tofile="build/WebTyphoon.nuspec" />
+
+		<exec program="${nuget}" verbose="true">
+			<arg line="pack build/WebTyphoon.nuspec" />
+		</exec>
+	</target>
+</project>
+
+

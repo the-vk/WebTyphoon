@@ -69,14 +69,14 @@ namespace WebTyphoon
 
 		public void SendFragment(WebSocketFragment fragment)
 		{
-			if(Status != WebSocketConnectionStatus.Open) throw new InvalidOperationException("Connection is not open");
+			if (Status != WebSocketConnectionStatus.Open) throw new InvalidOperationException("Connection is not open");
 
 			WriteData(fragment);
 		}
 
 		internal void StartRead()
 		{
-			var state = new AsyncReadData {Stream = _stream, Buffer = new byte[InputBufferLength]};
+			var state = new AsyncReadData { Stream = _stream, Buffer = new byte[InputBufferLength] };
 
 			try
 			{
@@ -91,7 +91,7 @@ namespace WebTyphoon
 
 		private void AsyncReadHandler(IAsyncResult ar)
 		{
-			var s = (AsyncReadData) ar.AsyncState;
+			var s = (AsyncReadData)ar.AsyncState;
 			try
 			{
 				var readBytes = s.Stream.EndRead(ar);
@@ -111,7 +111,7 @@ namespace WebTyphoon
 				Debug.WriteLine("Error during read from socket: {0}", ex);
 				FailConnection("Read error", false);
 			}
-			
+
 		}
 
 		private void ReadData(byte[] buffer, int readBytes)
@@ -273,7 +273,7 @@ namespace WebTyphoon
 		{
 			ThreadPool.QueueUserWorkItem(NotifyWebSocketFragmentRecieved, e);
 
-			if(!e.Fragment.Fin)
+			if (!e.Fragment.Fin)
 			{
 				if (_fragmentsList.Count == 0 && e.Fragment.OpCode == OpCode.ContinuationFrame)
 				{
@@ -293,7 +293,7 @@ namespace WebTyphoon
 						CloseConnection(e.Fragment);
 						break;
 					case OpCode.ContinuationFrame:
-						if(_fragmentsList.Count == 0)
+						if (_fragmentsList.Count == 0)
 						{
 							FailConnection("No starting fragment", true);
 							return;
@@ -338,7 +338,7 @@ namespace WebTyphoon
 			if (sendCloseFragment)
 			{
 				CloseConnection(reason);
-			}			
+			}
 		}
 
 		protected void SendPongFrame(WebSocketFragment fragment)
@@ -353,7 +353,7 @@ namespace WebTyphoon
 			SendFragment(fragment);
 
 			Status = WebSocketConnectionStatus.Closing;
-			OnClosing(this, new WebSocketConnectionStateChangeEventArgs {Connection = this});
+			OnClosing(this, new WebSocketConnectionStateChangeEventArgs { Connection = this });
 		}
 
 		protected void CloseConnection(WebSocketFragment fragment)
@@ -382,7 +382,7 @@ namespace WebTyphoon
 		public event EventHandler<WebSocketConnectionStateChangeEventArgs> Closing;
 		protected void OnClosing(object sender, WebSocketConnectionStateChangeEventArgs e)
 		{
-			if(Closing != null)
+			if (Closing != null)
 			{
 				Closing(sender, e);
 			}
@@ -391,7 +391,7 @@ namespace WebTyphoon
 		public event EventHandler<WebSocketConnectionStateChangeEventArgs> Closed;
 		protected void OnClosed(object sender, WebSocketConnectionStateChangeEventArgs e)
 		{
-			if(Closed != null)
+			if (Closed != null)
 			{
 				Closed(sender, e);
 			}
@@ -400,7 +400,7 @@ namespace WebTyphoon
 		public event EventHandler<EventArgs> SendQueueEmpty;
 		public void OnSendQueueEmpty(object sender, EventArgs e)
 		{
-			if(SendQueueEmpty != null)
+			if (SendQueueEmpty != null)
 			{
 				SendQueueEmpty(sender, e);
 			}

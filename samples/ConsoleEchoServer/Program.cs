@@ -26,25 +26,25 @@ using System.Net.Sockets;
 
 namespace WebTyphoon.Samples.ConsoleEchoServer
 {
-    class Program
-    {
-        static void Main()
-        {
-            var webTyphoon = new WebTyphoon();
+	class Program
+	{
+		static void Main()
+		{
+			var webTyphoon = new WebTyphoon();
 
-            webTyphoon.AddUriBinding(new[] { "/" }, null, null, null, WebTyphoonConnectionAccepted);
+			webTyphoon.AddUriBinding(new[] { "/" }, null, null, null, WebTyphoonConnectionAccepted);
 
-            var ipEndpoint = new IPEndPoint(IPAddress.Any, 9000);
-            var tcpListener = new TcpListener(ipEndpoint);
-            tcpListener.Start();
+			var ipEndpoint = new IPEndPoint(IPAddress.Any, 9000);
+			var tcpListener = new TcpListener(ipEndpoint);
+			tcpListener.Start();
 
-	        tcpListener.BeginAcceptTcpClient(BeginAcceptClientCallback, new Tuple<TcpListener, WebTyphoon>(tcpListener, webTyphoon));
+			tcpListener.BeginAcceptTcpClient(BeginAcceptClientCallback, new Tuple<TcpListener, WebTyphoon>(tcpListener, webTyphoon));
 
-            Console.WriteLine("Press any key to exit...");
-	        Console.ReadKey(true);
+			Console.WriteLine("Press any key to exit...");
+			Console.ReadKey(true);
 
 			tcpListener.Stop();
-        }
+		}
 
 		static void BeginAcceptClientCallback(IAsyncResult ar)
 		{
@@ -65,22 +65,22 @@ namespace WebTyphoon.Samples.ConsoleEchoServer
 				connection.SendText(fragment.PayloadString);
 		}
 
-        static void WebTyphoonConnectionAccepted(object sender, WebSocketConnectionEventArgs e)
-        {
-            var connection = e.Connection;
-            connection.WebSocketFragmentRecieved += ConnectionWebSocketFragmentRecieved;
-	        connection.Closed += ConnectionClosedHandler;
-        }
+		static void WebTyphoonConnectionAccepted(object sender, WebSocketConnectionEventArgs e)
+		{
+			var connection = e.Connection;
+			connection.WebSocketFragmentRecieved += ConnectionWebSocketFragmentRecieved;
+			connection.Closed += ConnectionClosedHandler;
+		}
 
-        static void ConnectionWebSocketFragmentRecieved(object sender, WebSocketFragmentRecievedEventArgs e)
-        {
-	        var connection = (WebSocketConnection) sender;
+		static void ConnectionWebSocketFragmentRecieved(object sender, WebSocketFragmentRecievedEventArgs e)
+		{
+			var connection = (WebSocketConnection)sender;
 			Process(connection, e.Fragment);
-        }
+		}
 
 		static void ConnectionClosedHandler(object sender, WebSocketConnectionStateChangeEventArgs e)
 		{
 			e.Connection.WebSocketFragmentRecieved -= ConnectionWebSocketFragmentRecieved;
 		}
-    }
+	}
 }

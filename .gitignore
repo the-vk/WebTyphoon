@@ -1,6 +1,12 @@
-bin/**
+samples/AspNetEchoServer/bin/**
+samples/AspNetEchoServer/obj/**
+samples/ConsoleEchoServer/bin/**
+samples/ConsoleEchoServer/obj/**
+src/WebTyphoon/bin/**
+src/webTyphoon/obj/**
 build/**
 obj/**
+performance/**
 
 *.nupkg
 *.suo

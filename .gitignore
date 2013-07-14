@@ -1,18 +1,6 @@
-<<<<<<< HEAD
 bin/
 build/
 obj/
-=======
-samples/AspNetEchoServer/bin/**
-samples/AspNetEchoServer/obj/**
-samples/ConsoleEchoServer/bin/**
-samples/ConsoleEchoServer/obj/**
-src/WebTyphoon/bin/**
-src/webTyphoon/obj/**
-build/**
-obj/**
-performance/**
->>>>>>> 5a2ea3a9a997dce2bf6bc65eff1dd774ecc6f727
 
 *.nupkg
 *.suo

@@ -35,7 +35,7 @@ namespace WebTyphoon.Samples.AspNetEchoServer
 
 			var client = tcpListener.EndAcceptTcpClient(ar);
 
-			webTyphoon.AcceptConnection(client.GetStream());
+			webTyphoon.ConnectAsServer(client.GetStream());
 
 			tcpListener.BeginAcceptTcpClient(BeginAcceptClientCallback, ar.AsyncState);
 		}

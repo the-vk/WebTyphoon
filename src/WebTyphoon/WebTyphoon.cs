@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (C) 2012 Andrew 'the vk' Maraev
+Copyright (C) 2012, 2013 Andrew 'the vk' Maraev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -39,7 +39,19 @@ namespace WebTyphoon
 			_uriBindings = new Dictionary<string, ConnectionHandlerData>();
 		}
 
+		[Obsolete("This method is obsolete. Call ConnectAsServer instead", false)]
 		public void AcceptConnection(NetworkStream stream)
+		{
+			ConnectAsServer(stream);
+		}
+
+		[Obsolete("This method is obsolete. Call ConnectAsServer instead", false)]
+		public WebSocketConnection AcceptConnection(NetworkStream stream, bool skipHandshaking)
+		{
+			return ConnectAsServer(stream, skipHandshaking);
+		}
+
+		public void ConnectAsServer(NetworkStream stream)
 		{
 			var handshaker = new WebSocketHandshaker(stream, this);
 			handshaker.HandshakeSuccess += HandshakeSuccessHandler;
@@ -48,7 +60,7 @@ namespace WebTyphoon
 			handshaker.Handshake();
 		}
 
-		public WebSocketConnection AcceptConnection(NetworkStream stream, bool skipHandshaking)
+		public WebSocketConnection ConnectAsServer(NetworkStream stream, bool skipHandshaking)
 		{
 			var connection = CreateNewConnection(stream);
 

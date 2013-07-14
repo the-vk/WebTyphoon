@@ -7,9 +7,10 @@
 		<authors>Andrew Maraev</authors>
 		<owners>Andrew Maraev</owners>
 		<projectUrl>https://github.com/the-vk/WebTyphoon</projectUrl>
+		<licenseUrl>https://github.com/the-vk/WebTyphoon/blob/master/License.txt</licenseUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>Lightweight implementation of websocket protocol for .Net.</description>
-		<releaseNotes>Initial release.</releaseNotes>
+		<releaseNotes>Implemented support for connecting as a client.</releaseNotes>
 		<copyright>Copyright 2012, 2013</copyright>
 		<tags>websockets server</tags>
 	</metadata>

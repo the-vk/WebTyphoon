@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleEchoServer", "sample
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetEchoServer", "samples\AspNetEchoServer\AspNetEchoServer.csproj", "{393CF02D-C3DC-453F-AB26-D7D78ECB05BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient", "ConsoleClient\ConsoleClient.csproj", "{FA1EFD97-A803-435C-BAAC-FC67473EC578}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient", "samples\ConsoleClient\ConsoleClient.csproj", "{FA1EFD97-A803-435C-BAAC-FC67473EC578}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

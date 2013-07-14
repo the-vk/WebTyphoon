@@ -48,7 +48,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\WebTyphoon\WebTyphoon.csproj">
+    <ProjectReference Include="..\..\src\WebTyphoon\WebTyphoon.csproj">
       <Project>{d20814a9-f972-4764-a531-efa4da4a61c7}</Project>
       <Name>WebTyphoon</Name>
     </ProjectReference>

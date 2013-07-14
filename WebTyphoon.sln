@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleEchoServer", "sample
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetEchoServer", "samples\AspNetEchoServer\AspNetEchoServer.csproj", "{393CF02D-C3DC-453F-AB26-D7D78ECB05BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient", "ConsoleClient\ConsoleClient.csproj", "{FA1EFD97-A803-435C-BAAC-FC67473EC578}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,16 @@ Global
 		{393CF02D-C3DC-453F-AB26-D7D78ECB05BC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{393CF02D-C3DC-453F-AB26-D7D78ECB05BC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{393CF02D-C3DC-453F-AB26-D7D78ECB05BC}.Release|x86.ActiveCfg = Release|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -56,5 +68,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{4DAC822A-FB44-4769-BCA6-10462233F5FC} = {BE4D2CCC-F962-48D0-8007-D092C4784008}
 		{393CF02D-C3DC-453F-AB26-D7D78ECB05BC} = {BE4D2CCC-F962-48D0-8007-D092C4784008}
+		{FA1EFD97-A803-435C-BAAC-FC67473EC578} = {BE4D2CCC-F962-48D0-8007-D092C4784008}
 	EndGlobalSection
 EndGlobal

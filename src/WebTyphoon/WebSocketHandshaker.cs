@@ -38,6 +38,11 @@ namespace WebTyphoon
 
 		private const string WebSocketKeyGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
+		public static string GetSecWebSocketKeyResponse(string request)
+		{
+			return EncodeToBase64SHA1(request + WebSocketKeyGuid);
+		}
+
 		public WebSocketHandshaker(NetworkStream stream, WebTyphoon dispatcher)
 		{
 			_stream = stream;
@@ -129,7 +134,7 @@ namespace WebTyphoon
 			}
 
 			var key = message["Sec-WebSocket-Key"];
-			var responseKey = EncodeToBase64SHA1(key + WebSocketKeyGuid);
+			var responseKey = GetSecWebSocketKeyResponse(key);
 
 			var sw = new StreamWriter(_stream);
 
@@ -171,7 +176,7 @@ namespace WebTyphoon
 			}
 		}
 
-		private string EncodeToBase64SHA1(string input)
+		private static string EncodeToBase64SHA1(string input)
 		{
 			var inputBytes = Encoding.ASCII.GetBytes(input);
 			var sha1 = new SHA1CryptoServiceProvider();

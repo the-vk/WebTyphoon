@@ -70,6 +70,12 @@ namespace WebTyphoon
 			return connection;
 		}
 
+		public WebSocketConnection ConnectAsClient(NetworkStream stream, Uri uri, string protocol, string origin)
+		{
+			var hanshaker = new WebSocketClientHandshaker();
+			return hanshaker.Hanshake(stream, uri, protocol, origin).Result;
+		}
+
 		public void AddUriBinding(string uri,
 			string protocol,
 			string origin,
